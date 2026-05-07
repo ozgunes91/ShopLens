@@ -30,7 +30,13 @@ st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
-* { font-family: 'Inter', sans-serif !important; }
+html, body, [class*="st-"], [data-testid="stAppViewContainer"] {
+  font-family: 'Inter', sans-serif !important;
+}
+/* Streamlit ikon fontlarını ezmemek için Material Symbols kendi fontunda bırakılır. */
+.material-symbols-rounded, .material-symbols-outlined, .material-icons {
+  font-family: 'Material Symbols Rounded', 'Material Symbols Outlined', 'Material Icons' !important;
+}
 header[data-testid="stHeader"], #MainMenu, footer { display:none !important; }
 .stApp { background:#F1F5F9; }
 .block-container { padding: 0 0 2rem 0 !important; max-width: 100% !important; }
@@ -983,10 +989,15 @@ elif sayfa == "Genel Öneriler":
     fil = top50_df.copy()
     if sec_k != "Tümü": fil = fil[fil["category"]==sec_k]
     siralama_k = {"Skor ↓":"oneri_skoru","Rating ↓":"ort_rating","Satış % ↓":"satis_orani"}
-    fil = fil.sort_values(siralama_k[sira],ascending=False).head(n)
+    fil = fil.sort_values(
+        [siralama_k[sira], "oneri_skoru", "name"],
+        ascending=[False, False, True]
+    ).head(n).copy()
+    fil["grafik_urun"] = fil["name"].str[:42]
+    grafik_sirasi = fil["grafik_urun"].tolist()[::-1]
 
     fig = go.Figure(go.Bar(
-        y=fil["name"].str[:42], x=fil["oneri_skoru"], orientation="h",
+        y=fil["grafik_urun"], x=fil["oneri_skoru"], orientation="h",
         marker=dict(color=fil["oneri_skoru"],
                     colorscale=[[0,"#FFF7ED"],[0.5,"#FED7AA"],[1,TURUNCU]],
                     showscale=True,
@@ -996,7 +1007,7 @@ elif sayfa == "Genel Öneriler":
         textposition="outside",textfont=dict(color="#334155",size=10),
     ))
     tema(fig, h=max(260,len(fil)*26), xaxis=dict(**EKSEN,title="Öneri Skoru"))
-    fig.update_yaxes(autorange="reversed",**EKSEN)
+    fig.update_yaxes(categoryorder="array", categoryarray=grafik_sirasi, **EKSEN)
     st.plotly_chart(fig, use_container_width=True)
 
     tbl = fil[["name","category","price_usd","ort_rating",

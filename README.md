@@ -169,10 +169,10 @@ Dashboard Streamlit ile hazırlandı. Ana bölümler:
 - Müşteri segmentasyonu ve kişisel öneri
 - İstatistiksel analizler
 
-Canlıya alma alanı:
+Canlı dashboard:
 
 ```text
-Streamlit linki: ________________________________
+https://shoplens.streamlit.app/
 ```
 
 ## Final Dosyaları
@@ -203,5 +203,5 @@ Python dependencies: requirements.txt
 Streamlit config: .streamlit/config.toml
 ```
 
-Canlı link oluşturulduktan sonra sunumdaki `Canlı Dashboard` alanına eklenebilir.
+Canlı dashboard linki: https://shoplens.streamlit.app/
 
