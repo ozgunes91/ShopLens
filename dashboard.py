@@ -37,7 +37,11 @@ html, body, [class*="st-"], [data-testid="stAppViewContainer"] {
 .material-symbols-rounded, .material-symbols-outlined, .material-icons {
   font-family: 'Material Symbols Rounded', 'Material Symbols Outlined', 'Material Icons' !important;
 }
-header[data-testid="stHeader"], #MainMenu, footer { display:none !important; }
+header[data-testid="stHeader"] {
+  background: transparent !important;
+  height: 2.25rem !important;
+}
+#MainMenu, footer { display:none !important; }
 .stApp { background:#F1F5F9; }
 .block-container { padding: 0 0 2rem 0 !important; max-width: 100% !important; }
 
