@@ -31,24 +31,31 @@ st.markdown("""
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,300..700,0..1,-50..200&display=swap');
 
-html, body, [class*="st-"], [data-testid="stAppViewContainer"] {
+html, body, [data-testid="stAppViewContainer"], [data-testid="stMarkdownContainer"] {
   font-family: 'Inter', sans-serif !important;
 }
 /* Streamlit ikon fontlarını ezmemek için Material Symbols kendi fontunda bırakılır. */
 .material-symbols-rounded,
 .material-symbols-outlined,
 .material-icons,
+[data-testid="stIconMaterial"],
+[data-testid="stSidebarCollapseButton"] span,
+[data-testid="stBaseButton-header"] span,
+[data-testid="stBaseButton-headerNoPadding"] span,
 [data-testid="collapsedControl"] span {
   font-family: 'Material Symbols Rounded', 'Material Symbols Outlined', 'Material Icons' !important;
   font-weight: normal !important;
   font-style: normal !important;
+  font-size: 1.45rem !important;
   line-height: 1 !important;
   letter-spacing: normal !important;
   text-transform: none !important;
   white-space: nowrap !important;
   word-wrap: normal !important;
   direction: ltr !important;
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24 !important;
   -webkit-font-feature-settings: 'liga' !important;
+  font-feature-settings: 'liga' !important;
   -webkit-font-smoothing: antialiased !important;
 }
 header[data-testid="stHeader"] {
