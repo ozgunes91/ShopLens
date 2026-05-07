@@ -28,7 +28,6 @@ models/                       Eğitilmiş model dosyaları
 pipeline.py                    Veri hazırlama, analiz ve modelleme pipeline'ı
 dashboard.py                  Streamlit dashboard
 ShopLens_Sunum_Final.pptx     Final proje sunumu
-Sunum_Anlatim_Notlari.md      Sunum sırasında kullanılabilecek anlatım notları
 requirements.txt              Gerekli Python kütüphaneleri
 ```
 
@@ -185,7 +184,6 @@ README.md
 requirements.txt
 pipeline.py
 dashboard.py
-Sunum_Anlatim_Notlari.md
 ShopLens_Sunum_Final.pptx
 data/
 outputs/
