@@ -1,0 +1,22 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.venv/
+venv/
+
+# Streamlit local secrets
+.streamlit/secrets.toml
+
+# Temporary files
+*.tmp
+*.log
+
+# Büyük ara eğitim çıktısı; dashboard çalışması için gerekli değil
+outputs/kisisel_model_verisi.csv
+
+# Yerel GitHub CLI oturumu
+.gh-config/
