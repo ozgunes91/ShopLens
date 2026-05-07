@@ -29,13 +29,27 @@ st.set_page_config(
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,300..700,0..1,-50..200&display=swap');
 
 html, body, [class*="st-"], [data-testid="stAppViewContainer"] {
   font-family: 'Inter', sans-serif !important;
 }
 /* Streamlit ikon fontlarını ezmemek için Material Symbols kendi fontunda bırakılır. */
-.material-symbols-rounded, .material-symbols-outlined, .material-icons {
+.material-symbols-rounded,
+.material-symbols-outlined,
+.material-icons,
+[data-testid="collapsedControl"] span {
   font-family: 'Material Symbols Rounded', 'Material Symbols Outlined', 'Material Icons' !important;
+  font-weight: normal !important;
+  font-style: normal !important;
+  line-height: 1 !important;
+  letter-spacing: normal !important;
+  text-transform: none !important;
+  white-space: nowrap !important;
+  word-wrap: normal !important;
+  direction: ltr !important;
+  -webkit-font-feature-settings: 'liga' !important;
+  -webkit-font-smoothing: antialiased !important;
 }
 header[data-testid="stHeader"] {
   background: transparent !important;
@@ -993,24 +1007,29 @@ elif sayfa == "Genel Öneriler":
     fil = top50_df.copy()
     if sec_k != "Tümü": fil = fil[fil["category"]==sec_k]
     siralama_k = {"Skor ↓":"oneri_skoru","Rating ↓":"ort_rating","Satış % ↓":"satis_orani"}
+    grafik_baslik = {"Skor ↓":"Öneri Skoru","Rating ↓":"Rating","Satış % ↓":"Satış Oranı"}
+    grafik_format = {"Skor ↓":lambda x: f"  {x:.3f}",
+                     "Rating ↓":lambda x: f"  {x:.2f}",
+                     "Satış % ↓":lambda x: f"  {x:.1%}"}
     fil = fil.sort_values(
         [siralama_k[sira], "oneri_skoru", "name"],
         ascending=[False, False, True]
     ).head(n).copy()
     fil["grafik_urun"] = fil["name"].str[:42]
     grafik_sirasi = fil["grafik_urun"].tolist()[::-1]
+    grafik_deger = siralama_k[sira]
 
     fig = go.Figure(go.Bar(
-        y=fil["grafik_urun"], x=fil["oneri_skoru"], orientation="h",
-        marker=dict(color=fil["oneri_skoru"],
+        y=fil["grafik_urun"], x=fil[grafik_deger], orientation="h",
+        marker=dict(color=fil[grafik_deger],
                     colorscale=[[0,"#FFF7ED"],[0.5,"#FED7AA"],[1,TURUNCU]],
                     showscale=True,
-                    colorbar=dict(title="Skor",thickness=10,
+                    colorbar=dict(title=grafik_baslik[sira],thickness=10,
                                   tickfont=dict(color="#64748B",size=9))),
-        text=fil["oneri_skoru"].apply(lambda x: f"  {x:.3f}"),
+        text=fil[grafik_deger].apply(grafik_format[sira]),
         textposition="outside",textfont=dict(color="#334155",size=10),
     ))
-    tema(fig, h=max(260,len(fil)*26), xaxis=dict(**EKSEN,title="Öneri Skoru"))
+    tema(fig, h=max(260,len(fil)*26), xaxis=dict(**EKSEN,title=grafik_baslik[sira]))
     fig.update_yaxes(categoryorder="array", categoryarray=grafik_sirasi, **EKSEN)
     st.plotly_chart(fig, use_container_width=True)
 
