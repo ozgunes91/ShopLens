@@ -92,7 +92,7 @@ Eksik değerleri doğrudan silmedim. Önce eksikliğin veri yapısından mı, yo
 | `events.product_id` checkout ve purchase satırlarında boş | Ürün bazlı satış için `events` değil, `order_items.quantity` kullanıldı |
 | Üründe yorum yok | Yorum sayısı ve duygu oranları uygun 0/nötr değerlerle dolduruldu |
 | Üründe görüntüleme veya sepete ekleme yok | İlgili event sayıları 0 kabul edildi |
-| Oran hesaplarında payda 0 olabilir | `np.where` ile sıfıra bölme engellendi |
+| `sepet_orani`, `satis_orani` ve kategori ilgisi gibi oranlarda payda 0 olabilir | `np.where` ile sıfıra bölme engellendi |
 | Sipariş geçmişi olmayan müşteri | RFM segmentasyonuna dahil edilmedi |
 
 Bu yaklaşım modelin hatalı veya uydurma sinyaller öğrenmesini engelledi.
