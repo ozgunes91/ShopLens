@@ -58,6 +58,13 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stMarkdownContaine
   font-feature-settings: 'liga' !important;
   -webkit-font-smoothing: antialiased !important;
 }
+/* Streamlit'in sidebar aç/kapa ikonu bazı tarayıcılarda yazı olarak göründüğü için gizlenir. */
+[data-testid="stSidebarCollapseButton"],
+[data-testid="collapsedControl"],
+button[aria-label="Close sidebar"],
+button[aria-label="Open sidebar"] {
+  display: none !important;
+}
 header[data-testid="stHeader"] {
   background: transparent !important;
   height: 2.25rem !important;
