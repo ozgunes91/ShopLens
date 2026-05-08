@@ -596,8 +596,8 @@ try:
     _auc_str = f"{float(_met_df['auc'].iloc[0]):.3f}"
     _dogr_str = f"% {float(_met_df['dogruluk'].iloc[0])*100:.1f}"
 except Exception:
-    _auc_str  = "0.914"   # fallback
-    _dogr_str = "% 84.3"
+    _auc_str  = "—"
+    _dogr_str = "—"
 
 st.markdown(f"""
 <div class="banner">
@@ -851,7 +851,13 @@ elif sayfa == "EDA":
     st.markdown('''<div class="sec-head">📈 EDA Grafikleri</div>''', unsafe_allow_html=True)
 
     b1, b2 = st.columns(2)
-    ev_say = pd.Series({"page_view":539343,"add_to_cart":143126,"checkout":44909,"purchase":33580})
+    event_sirasi = ["page_view", "add_to_cart", "checkout", "purchase"]
+    ev_say = (
+        funnel_df.set_index("adim")["event_sayisi"]
+        .reindex(event_sirasi)
+        .dropna()
+        .astype(int)
+    )
     with b1:
         fig = px.bar(x=ev_say.index, y=ev_say.values,
                      color=ev_say.values,
@@ -863,9 +869,17 @@ elif sayfa == "EDA":
         # Barların üstündeki sayıların kesilmemesi için y ekseni biraz geniş tutuldu
         tema(fig, h=300, baslik="Event Tipi Dağılımı",
              xaxis=dict(**EKSEN, title=""),
-             yaxis=dict(**EKSEN, title="Kayıt Sayısı", range=[0, 660000]))
+             yaxis=dict(**EKSEN, title="Kayıt Sayısı",
+                        range=[0, int(ev_say.max() * 1.18)]))
         st.plotly_chart(fig, use_container_width=True)
-        st.caption("📌 Sayfa görüntüleme (539K) açık ara en sık eylem. Sepete ekleme ise 4 kat daha az — kullanıcıların büyük çoğunluğu ürünü görüyor ama sepete eklemiyor. Asıl darboğaz burada.")
+        pv = int(ev_say.get("page_view", 0))
+        cart = int(ev_say.get("add_to_cart", 0))
+        cart_ratio = (cart / pv) if pv else 0
+        st.caption(
+            f"📌 Sayfa görüntüleme ({pv:,}) açık ara en sık eylem. "
+            f"Sepete ekleme oranı %{cart_ratio * 100:.1f}; kullanıcıların önemli bir kısmı "
+            "ürünü görüyor ancak sepete ekleme adımına geçmiyor. Asıl darboğaz burada."
+        )
     with b2:
         try:
             events_tmp = pd.read_csv("data/events.csv", parse_dates=["timestamp"])

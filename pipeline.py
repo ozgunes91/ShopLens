@@ -430,7 +430,7 @@ def ozellik_muhendisligi(ev_temiz, products, reviews, order_items):
 
     Türetilen Özellikler:
       sepet_orani   = add_to_cart / page_view   (davranışsal)
-      odeme_orani   = checkout / add_to_cart    (dönüşüm)
+      odeme_orani   = ürün bazlı checkout olmadığı için hesaplanmadı
       satis_orani   = satis_adedi / page_view   (nihai dönüşüm)
       pozitif_oran  = duygu analizinden (sonraki adımda)
 
@@ -484,8 +484,10 @@ def ozellik_muhendisligi(ev_temiz, products, reviews, order_items):
     # np.where → sıfıra bölme koruması
     df["sepet_orani"] = np.where(df["page_view"] > 0,
                                  df["add_to_cart"] / df["page_view"], 0.0)
-    df["odeme_orani"] = np.where(df["add_to_cart"] > 0,
-                                 0.0, 0.0)  # checkout event null olduğundan 0
+    # checkout eventleri ürün bazında product_id taşımadığı için bu oran ürün
+    # tablosunda gerçek anlamda hesaplanamaz. Yanıltıcı bir oran üretmemek için
+    # sabit 0 bırakılır; gerçek satış sinyali order_items üzerinden alınır.
+    df["odeme_orani"] = 0.0
     df["satis_orani"] = np.where(df["page_view"] > 0,
                                  df["satis_adedi"] / df["page_view"], 0.0)
 
