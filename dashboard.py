@@ -104,10 +104,6 @@ header[data-testid="stHeader"] {
   letter-spacing: -0.03em; line-height: 1;
 }
 .brand-accent { color: #F97316; }
-.brand-ver {
-  font-size: 0.6rem; font-weight: 600; color: rgba(249,115,22,0.7);
-  letter-spacing: 0.12em; text-transform: uppercase; margin-left: 4px;
-}
 .banner-tagline {
   font-size: 0.72rem; color: rgba(255,255,255,0.45);
   font-weight: 400; margin-top: 4px; letter-spacing: 0.04em;
@@ -606,7 +602,6 @@ st.markdown(f"""
     <div class="banner-left">
       <div class="brand-row">
         <span class="brand-name">Shop<span class="brand-accent">Lens</span></span>
-        <span class="brand-ver">v2.0</span>
       </div>
       <div class="banner-tagline">E-Ticaret Davranış Analizi ve Akıllı Ürün Öneri Sistemi</div>
       <div class="banner-problem">
