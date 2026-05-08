@@ -1085,11 +1085,14 @@ elif sayfa == "Model":
 
     st.markdown("""
     <div class="info-box">
-      <strong>Bu model şu soruyu yanıtlar: "Bu ürün müşterilere önerilmeli mi?"</strong><br><br>
-      Cevap iki sınıftan biridir: <strong>Evet (önerilir)</strong> veya <strong>Hayır (önerilmez)</strong>.
-      Bu nedenle problem bir regresyon değil, <em>ikili sınıflandırma</em> problemidir.<br><br>
-      Kullanılan algoritma <strong>Random Forest Classifier</strong>'dır. Modelde 200 karar ağacı kullanılır;
-      her ağaç ayrı karar verir, sonuç çoğunluk oyu ile belirlenir. Bu yapı tek karar ağacına göre daha kararlı sonuç üretir.<br><br>
+      <strong>Bu bölümde iki model ayrı ayrı okunmalıdır.</strong><br><br>
+      İlk model ürün seviyesinde çalışır ve şu soruyu yanıtlar:
+      <strong>"Bu ürün genel olarak önerilmeli mi?"</strong> Cevap iki sınıftan biridir:
+      <strong>Evet (önerilir)</strong> veya <strong>Hayır (önerilmez)</strong>.
+      İkinci model müşteri-ürün seviyesinde çalışır ve şu soruya odaklanır:
+      <strong>"Bu müşteri bu ürünü satın alır mı?"</strong><br><br>
+      Her iki problem de regresyon değil, <em>ikili sınıflandırma</em> problemidir.
+      Kullanılan algoritma <strong>Random Forest Classifier</strong>'dır; karar ağaçlarının çoğunluk kararını kullanarak daha kararlı sonuç üretir.<br><br>
       <strong>Neden "satış oranı" modele dahil edilmedi?</strong> Çünkü hedef etiket, satış oranının da içinde bulunduğu
       ağırlıklı <strong>öneri skoru</strong> üzerinden oluşturuldu. Satış oranını ayrıca modele vermek,
       modele cevabın bir parçasını göstermek olurdu. Bu durum <em>veri sızıntısı</em> yaratır ve test sonuçlarını olduğundan iyi gösterebilir.
@@ -1102,8 +1105,12 @@ elif sayfa == "Model":
         tpr     = np.load("outputs/roc_tpr.npy")
         fi      = pd.read_csv("outputs/ozellik_onemi.csv")
         met     = pd.read_csv("outputs/model_met.csv")
+        kcm     = np.load("outputs/kisisel_cm.npy")
+        kmet    = pd.read_csv("outputs/kisisel_model_met.csv")
         auc_val = float(met["auc"].iloc[0])
         dogr    = float(met["dogruluk"].iloc[0])
+        kauc    = float(kmet["auc"].iloc[0])
+        kdogr   = float(kmet["dogruluk"].iloc[0])
     except FileNotFoundError:
         st.warning("Model çıktısı yok. `python pipeline.py` çalıştırın.")
         st.stop()
@@ -1112,6 +1119,10 @@ elif sayfa == "Model":
     prec = tp/(tp+fp) if (tp+fp)>0 else 0
     rec  = tp/(tp+fn) if (tp+fn)>0 else 0
     f1   = 2*prec*rec/(prec+rec) if (prec+rec)>0 else 0
+    ktn,kfp,kfn,ktp = kcm.ravel()
+    kprec = ktp/(ktp+kfp) if (ktp+kfp)>0 else 0
+    krec  = ktp/(ktp+kfn) if (ktp+kfn)>0 else 0
+    kf1   = 2*kprec*krec/(kprec+krec) if (kprec+krec)>0 else 0
 
     m1,m2,m3,m4 = st.columns(4)
     for kol,l,v,s,cls in [
@@ -1126,6 +1137,36 @@ elif sayfa == "Model":
           <div class="kpi-num">{v}</div>
           <div class="kpi-badge neu">{s}</div>
         </div>''', unsafe_allow_html=True)
+
+    st.markdown("<br>",unsafe_allow_html=True)
+    st.markdown('''<div class="sec-head" style="margin-top:4px">🧭 İki Modelin Rolü</div>''',
+                unsafe_allow_html=True)
+    model_ozet = pd.DataFrame([
+        {
+            "Model": "Genel ürün modeli",
+            "Veri seviyesi": "Ürün",
+            "Soru": "Bu ürün genel olarak önerilmeli mi?",
+            "Kullanım": "Genel öneri listesi ve ürün performansı",
+            "AUC": f"{auc_val:.3f}",
+            "Doğruluk": f"{dogr:.1%}",
+            "Precision": f"{prec:.1%}",
+            "Recall": f"{rec:.1%}",
+            "F1": f"{f1:.3f}",
+        },
+        {
+            "Model": "Kişiye özel satın alma modeli",
+            "Veri seviyesi": "Müşteri + ürün",
+            "Soru": "Bu müşteri bu ürünü satın alır mı?",
+            "Kullanım": "Müşteri sekmesindeki kişisel öneriler",
+            "AUC": f"{kauc:.3f}",
+            "Doğruluk": f"{kdogr:.1%}",
+            "Precision": f"{kprec:.1%}",
+            "Recall": f"{krec:.1%}",
+            "F1": f"{kf1:.3f}",
+        },
+    ])
+    st.dataframe(model_ozet, use_container_width=True, hide_index=True)
+    st.caption("📌 Bu iki model aynı işi yapmaz: genel model ürünleri genel performansa göre açıklar, kişisel model ise belirli müşteri için satın alma olasılığı üretir. Bu yüzden metrikler ayrı yorumlanmalıdır.")
 
     st.markdown("<br>",unsafe_allow_html=True)
     c1, c2 = st.columns(2)
@@ -1164,6 +1205,9 @@ elif sayfa == "Model":
                 unsafe_allow_html=True)
     fi["ad"] = fi["ozellik"].map(OZELLIK_AD).fillna(fi["ozellik"])
     fi_s = fi.sort_values("onem")
+    fi_desc = fi.sort_values("onem", ascending=False).reset_index(drop=True)
+    ilk = fi_desc.iloc[0]
+    ikinci = fi_desc.iloc[1] if len(fi_desc) > 1 else fi_desc.iloc[0]
     rk_fi = [TURUNCU if i==len(fi_s)-1 else MAVI for i in range(len(fi_s))]
     fig = go.Figure(go.Bar(y=fi_s["ad"],x=fi_s["onem"],orientation="h",
         marker_color=rk_fi,
@@ -1171,7 +1215,10 @@ elif sayfa == "Model":
         textposition="outside",textfont=dict(color="#334155",size=11)))
     tema(fig, h=295, xaxis=dict(**EKSEN,title="Göreceli Önem",range=[0,0.28]),yaxis=dict(**EKSEN))
     st.plotly_chart(fig, use_container_width=True)
-    st.caption("📌 Sepete ekleme oranı (%21.7) açık ara en belirleyici faktör — dönüşüm hunisi bulgusunu doğruluyor. Duygu skoru üçüncü sırada: NLP analizinin modele somut katkısı var.")
+    st.caption(
+        f"📌 {ilk['ad']} (%{ilk['onem']*100:.1f}) modelde en yüksek ağırlığa sahip. "
+        f"{ikinci['ad']} (%{ikinci['onem']*100:.1f}) ikinci sırada yer alıyor; bu da davranış ve yorum sinyallerinin birlikte çalıştığını gösteriyor."
+    )
 
 # =========================================================================
 # SAYFA 6 — DUYGU
