@@ -590,9 +590,9 @@ def kisisel_satin_alma_tahmini(customer_id, adet=8):
 # =============================================================================
 # BANNER
 # =============================================================================
-# Model metriklerini banner için önceden yükle
+# Kişiye özel satın alma tahmini metriklerini banner için önceden yükle
 try:
-    _met_df  = pd.read_csv("outputs/model_met.csv")
+    _met_df  = pd.read_csv("outputs/kisisel_model_met.csv")
     _auc_str = f"{float(_met_df['auc'].iloc[0]):.3f}"
     _dogr_str = f"% {float(_met_df['dogruluk'].iloc[0])*100:.1f}"
 except Exception:
@@ -636,7 +636,7 @@ st.markdown(f"""
       <div class="bstat-div"></div>
       <div class="bstat">
         <span class="bstat-num accent">{_auc_str}</span>
-        <span class="bstat-lbl">AUC</span>
+        <span class="bstat-lbl">Kişisel AUC</span>
       </div>
       <div class="bstat-div"></div>
       <div class="bstat">
