@@ -92,7 +92,7 @@ Eksik değerleri doğrudan silmedim. Önce eksikliğin veri yapısından mı, yo
 | `events.product_id` checkout ve purchase satırlarında boş | Ürün bazlı satış için `events` değil, `order_items.quantity` kullanıldı |
 | Üründe yorum yok | Yorum sayısı ve duygu oranları uygun 0/nötr değerlerle dolduruldu |
 | Üründe görüntüleme veya sepete ekleme yok | İlgili event sayıları 0 kabul edildi |
-| `sepet_orani`, `satis_orani` ve kategori ilgisi gibi oranlarda payda 0 olabilir | `np.where` ile sıfıra bölme engellendi |
+| `sepet_orani`, `satis_orani` ve kategori ilgisi gibi oranlarda payda 0 olabilir | Koşullu hesaplama ile sıfıra bölme engellendi |
 | Sipariş geçmişi olmayan müşteri | RFM segmentasyonuna dahil edilmedi |
 
 Bu yaklaşım modelin hatalı veya uydurma sinyaller öğrenmesini engelledi.
@@ -156,6 +156,24 @@ Doğruluk: 0.883
 ```
 
 Bu sonuçlar modelin satın alma olasılığı yüksek ve düşük müşteri-ürün çiftlerini ayırabildiğini gösterir. Gerçek bir iş ortamında bu tür bir modelin ayrıca canlı A/B test ile doğrulanması gerekir.
+
+## Görsel Çıktılar
+
+Pipeline çalıştırıldığında dashboard ve sunumda kullanılan görseller `outputs/charts/` klasöründe yeniden üretilir. Bu görseller, proje adımlarını hızlıca kontrol etmek ve raporu görsel olarak desteklemek için kullanılır.
+
+| Görsel | Ne gösteriyor? |
+|---|---|
+| <img src="outputs/charts/00_eda.png" width="420"> | Veri büyüklüğü, event dağılımı ve temel rating yapısının keşifsel özeti |
+| <img src="outputs/charts/01_funnel.png" width="420"> | Sayfa görüntüleme, sepete ekleme, checkout ve satın alma adımlarındaki dönüşüm hunisi |
+| <img src="outputs/charts/02_duygu.png" width="420"> | VADER + rating hibrit yaklaşımıyla oluşan duygu dağılımı |
+| <img src="outputs/charts/03_top_urunler.png" width="420"> | Genel öneri listesinde öne çıkan ürünler |
+| <img src="outputs/charts/04_skor.png" width="420"> | Öneri skoru dağılımı ve önerilir ürün eşiği |
+| <img src="outputs/charts/05_gelir.png" width="420"> | Ürünlerin gelir katkısı ve ticari performans görünümü |
+| <img src="outputs/charts/06_cm.png" width="420"> | Genel ürün öneri modelinin confusion matrix çıktısı |
+| <img src="outputs/charts/07_roc.png" width="420"> | Genel ürün öneri modelinin ROC eğrisi |
+| <img src="outputs/charts/08_onem.png" width="420"> | Modelde kullanılan değişkenlerin göreceli önemleri |
+| <img src="outputs/charts/09_rfm.png" width="420"> | RFM müşteri segmentlerinin dağılımı |
+| <img src="outputs/charts/10_rfm_scatter.png" width="420"> | RFM segmentlerinin recency ve harcama eksenindeki görünümü |
 
 ## Dashboard
 

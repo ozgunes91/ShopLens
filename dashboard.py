@@ -1318,8 +1318,8 @@ elif sayfa == "Duygu":
     tema(fig,h=240,xaxis=dict(**EKSEN,tickvals=[1,2,3,4,5],
         ticktext=["1★","2★★","3★★★","4★★★★","5★★★★★"]),
         yaxis=dict(**EKSEN,title="Yorum Sayısı"))
-        st.plotly_chart(fig,use_container_width=True)
-        st.caption("📌 4 ve 5 yıldızlı yorumların baskın olması müşteri memnuniyetinin yüksek olduğunu destekliyor. Düşük yıldızlı yorumlar ise iyileştirme yapılabilecek ürünleri yakalamak için kullanılır.")
+    st.plotly_chart(fig,use_container_width=True)
+    st.caption("📌 4 ve 5 yıldızlı yorumların baskın olması müşteri memnuniyetinin yüksek olduğunu destekliyor. Düşük yıldızlı yorumlar ise iyileştirme yapılabilecek ürünleri yakalamak için kullanılır.")
 
     pipeline_gorsel_kutusu([
         (
