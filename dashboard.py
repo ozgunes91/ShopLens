@@ -138,6 +138,10 @@ header[data-testid="stHeader"] {
   display: block;
 }
 .bstat-num.accent { color: #F97316; }
+.bstat-num.dual {
+  font-size: 1.18rem;
+  white-space: nowrap;
+}
 .bstat-lbl {
   font-size: 0.58rem; color: rgba(255,255,255,0.4);
   font-weight: 500; text-transform: uppercase;
@@ -587,14 +591,15 @@ def kisisel_satin_alma_tahmini(customer_id, adet=8):
 # =============================================================================
 # BANNER
 # =============================================================================
-# Kişiye özel satın alma tahmini metriklerini banner için önceden yükle
+# Banner'da iki modelin AUC değerini birlikte gösteriyoruz.
 try:
-    _met_df  = pd.read_csv("outputs/kisisel_model_met.csv")
-    _auc_str = f"{float(_met_df['auc'].iloc[0]):.3f}"
-    _dogr_str = f"% {float(_met_df['dogruluk'].iloc[0])*100:.1f}"
+    _urun_met_df = pd.read_csv("outputs/model_met.csv")
+    _kisi_met_df = pd.read_csv("outputs/kisisel_model_met.csv")
+    _urun_auc_str = f"{float(_urun_met_df['auc'].iloc[0]):.3f}"
+    _kisi_auc_str = f"{float(_kisi_met_df['auc'].iloc[0]):.3f}"
 except Exception:
-    _auc_str  = "—"
-    _dogr_str = "—"
+    _urun_auc_str = "—"
+    _kisi_auc_str = "—"
 
 st.markdown(f"""
 <div class="banner">
@@ -631,8 +636,8 @@ st.markdown(f"""
       </div>
       <div class="bstat-div"></div>
       <div class="bstat">
-        <span class="bstat-num accent">{_auc_str}</span>
-        <span class="bstat-lbl">Kişisel AUC</span>
+        <span class="bstat-num accent dual">{_urun_auc_str} / {_kisi_auc_str}</span>
+        <span class="bstat-lbl">Ürün / Kişisel AUC</span>
       </div>
       <div class="bstat-div"></div>
       <div class="bstat">
