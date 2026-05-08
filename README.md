@@ -139,23 +139,35 @@ Skorda kullanılan başlıca alanlar:
 
 ## Modelleme
 
-Bu projedeki ana problem **ikili sınıflandırma** problemidir. Model satış adedi gibi sürekli bir değer tahmin etmez. Bunun yerine müşteri-ürün çifti için satın alma durumunu tahmin eder:
+Projede iki ayrı ikili sınıflandırma modeli kullandım. Bu iki model aynı soruyu sormuyor; bu yüzden sonuçları ayrı ayrı yorumladım.
+
+| Model | Veri seviyesi | Modelin sorusu | Kullanıldığı yer |
+|---|---|---|---|
+| Genel ürün modeli | Ürün | Bu ürün genel olarak önerilmeli mi? | Genel öneriler ve ürün performansı |
+| Kişiye özel satın alma modeli | Müşteri + ürün | Bu müşteri bu ürünü satın alır mı? | Müşteri sekmesindeki kişisel öneriler |
+
+Genel ürün modelinde hedef değişken, ağırlıklı `oneri_skoru` değerinin üst %30'luk dilimine göre oluşturuldu:
+
+```text
+1 = önerilir
+0 = önerilmez
+```
+
+Kişiye özel modelde hedef değişken gerçek sipariş verisinden oluşturuldu:
 
 ```text
 1 = satın aldı
 0 = satın almadı
 ```
 
-Kişisel satın alma tahmini için Random Forest kullandım. Bu model, karar ağaçları mantığıyla çalıştığı için sonuçları yorumlamak kolaydır. Ayrıca doğrusal olmayan ilişkileri yakalayabilir ve özellik önemlerini gösterebilir.
+Her iki modelde de Random Forest kullandım. Karar ağaçları mantığıyla çalıştığı için sonuçları açıklamak kolaydır; ayrıca hangi değişkenlerin model kararında daha etkili olduğunu görebilirim.
 
-Kişisel model sonuçları:
+| Model | AUC | Doğruluk | Precision | Recall | F1 |
+|---|---:|---:|---:|---:|---:|
+| Genel ürün modeli | 0.913 | %84.7 | %73.4 | %76.7 | 0.750 |
+| Kişiye özel satın alma modeli | 0.955 | %88.3 | %48.7 | %99.96 | 0.655 |
 
-```text
-AUC: 0.955
-Doğruluk: 0.883
-```
-
-Bu sonuçlar modelin satın alma olasılığı yüksek ve düşük müşteri-ürün çiftlerini ayırabildiğini gösterir. Gerçek bir iş ortamında bu tür bir modelin ayrıca canlı A/B test ile doğrulanması gerekir.
+Kişisel modelde recall değerinin çok yüksek olması, satın alma yapan müşteri-ürün çiftlerini neredeyse hiç kaçırmadığını gösterir. Precision daha düşüktür; yani model bazı ürünleri olası satın alma olarak işaretleyebilir. Öneri sistemlerinde bu durum izlenmesi gereken bir maliyettir. Gerçek bir iş ortamında böyle bir modelin canlı A/B test ile doğrulanması gerekir.
 
 ## Görsel Çıktılar
 
