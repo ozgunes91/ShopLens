@@ -192,7 +192,7 @@ models/
 
 ## Canlı Dashboard Yayını
 
-Dashboard Streamlit Community Cloud üzerinden yayınlanacak şekilde hazırlanmıştır.
+Dashboard Streamlit Community Cloud üzerinden yayınlanmıştır.
 
 Yayın ayarları:
 
@@ -204,4 +204,3 @@ Streamlit config: .streamlit/config.toml
 ```
 
 Canlı dashboard linki: https://shoplens.streamlit.app/
-
