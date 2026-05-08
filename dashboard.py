@@ -71,7 +71,13 @@ header[data-testid="stHeader"] {
 }
 #MainMenu, footer { display:none !important; }
 .stApp { background:#F1F5F9; }
-.block-container { padding: 0 0 2rem 0 !important; max-width: 100% !important; }
+.block-container {
+  padding: 0 24px 2.5rem 32px !important;
+  max-width: 100% !important;
+}
+@media (max-width: 900px) {
+  .block-container { padding: 0 14px 2rem 14px !important; }
+}
 
 /* ── BANNER ────────────────────────────────────────────── */
 .banner {
@@ -689,7 +695,7 @@ with st.sidebar:
     """, unsafe_allow_html=True)
 
 # ── Ana içerik ──────────────────────────────────────────────────────────────
-st.markdown('<div style="padding:12px 20px 32px;">', unsafe_allow_html=True)
+st.markdown('<div style="padding:22px 16px 40px;">', unsafe_allow_html=True)
 
 # =========================================================================
 # SAYFA 1 — ÖZET
