@@ -779,15 +779,18 @@ if sayfa == "Özet":
         st.caption("📌 10.780 yorumun %70.7'si pozitif — müşteri memnuniyeti yüksek. Bu oran, öneri formülümüzün %18'ini oluşturan duygu skorunu besliyor.")
     with kk:
         kat = urun_df.groupby("category")["oneri_skoru"].mean().reset_index().sort_values("oneri_skoru")
+        kat_max = float(kat["oneri_skoru"].max()) if len(kat) else 1
         fig = px.bar(kat, x="oneri_skoru", y="category", orientation="h",
                      color="oneri_skoru",
                      color_continuous_scale=[[0,"#DBEAFE"],[0.5,MAVI],[1,LACIVERT]],
                      text=kat["oneri_skoru"].apply(lambda x: f"{x:.3f}"))
-        fig.update_traces(textposition="outside",textfont=dict(color="#334155",size=10))
+        fig.update_traces(textposition="outside",textfont=dict(color="#334155",size=10),cliponaxis=False)
         fig.update_coloraxes(showscale=False)
         tema(fig, h=250, baslik="Kategori Ort. Skor",
-             xaxis=dict(**EKSEN,title="Ort. Skor"), yaxis=dict(**EKSEN,title=""))
-        st.plotly_chart(fig, use_container_width=True)
+             xaxis=dict(**EKSEN,title="Ort. Skor",range=[0,kat_max*1.16]),
+             yaxis=dict(**EKSEN,title=""),
+             margin=dict(l=10,r=70,t=40,b=10))
+        st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
         st.caption("📌 Kitap ve oyuncak kategorileri en yüksek ortalama öneri skoruna sahip. Elektronik kategorisi belirgin biçimde geride — fiyat-satış dengesi daha zayıf.")
 
 # =========================================================================
@@ -1459,16 +1462,20 @@ elif sayfa == "İstatistik":
 
     bk,rk2=st.columns(2)
     with bk:
-        fig=px.bar(kat.sort_values("ort_sk"),x="ort_sk",y="category",orientation="h",
+        kat_sirali = kat.sort_values("ort_sk")
+        kat_max = float(kat_sirali["ort_sk"].max()) if len(kat_sirali) else 1
+        fig=px.bar(kat_sirali,x="ort_sk",y="category",orientation="h",
             color="ort_sk",
             color_continuous_scale=[[0,"#DBEAFE"],[0.5,MAVI],[1,LACIVERT]],
-            text=kat.sort_values("ort_sk")["ort_sk"].apply(lambda x:f"{x:.3f}"),
+            text=kat_sirali["ort_sk"].apply(lambda x:f"{x:.3f}"),
             labels={"ort_sk":"Ort.Skor","category":""})
-        fig.update_traces(textposition="outside",textfont=dict(color="#334155",size=10))
+        fig.update_traces(textposition="outside",textfont=dict(color="#334155",size=10),cliponaxis=False)
         fig.update_coloraxes(showscale=False)
         tema(fig,h=320,baslik="Kategori Başına Ort. Skor",
-             xaxis=dict(**EKSEN,title="Ortalama Skor"),yaxis=dict(**EKSEN))
-        st.plotly_chart(fig,use_container_width=True)
+             xaxis=dict(**EKSEN,title="Ortalama Skor",range=[0,kat_max*1.16]),
+             yaxis=dict(**EKSEN),
+             margin=dict(l=10,r=70,t=40,b=10))
+        st.plotly_chart(fig,use_container_width=True, config={"displayModeBar": False})
         st.caption("📌 Kategori ortalama skorları, hangi ürün gruplarının genel öneri performansında öne çıktığını gösterir. Skoru düşük kategoriler fiyat, rating veya dönüşüm sinyalleri açısından daha zayıf kalmış olabilir.")
 
     with rk2:
