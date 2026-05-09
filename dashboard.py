@@ -221,6 +221,85 @@ header[data-testid="stHeader"] {
 .kpi-badge.down { background:#FEE2E2; color:#DC2626; }
 .kpi-badge.neu  { background:#F1F5F9; color:#64748B; }
 
+.model-compare {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 12px;
+}
+.model-card {
+  background: white;
+  border: 1px solid #E2E8F0;
+  border-radius: 14px;
+  padding: 16px 18px;
+  box-shadow: 0 6px 18px rgba(15,23,42,0.06);
+}
+.model-card.product { border-top: 4px solid #F97316; }
+.model-card.personal { border-top: 4px solid #3B82F6; }
+.model-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+.model-title {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #1E293B;
+}
+.model-subtitle {
+  font-size: 0.72rem;
+  color: #64748B;
+  line-height: 1.35;
+  margin-top: 3px;
+}
+.model-pill {
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #C2410C;
+  background: #FFF7ED;
+  border: 1px solid #FED7AA;
+  border-radius: 999px;
+  padding: 4px 8px;
+  white-space: nowrap;
+}
+.model-card.personal .model-pill {
+  color: #1D4ED8;
+  background: #EFF6FF;
+  border-color: #BFDBFE;
+}
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+.mini-metric {
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 10px;
+  padding: 9px 10px;
+}
+.mini-label {
+  font-size: 0.56rem;
+  color: #94A3B8;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+.mini-value {
+  font-size: 1rem;
+  color: #0F172A;
+  font-weight: 850;
+  margin-top: 3px;
+}
+@media (max-width: 1100px) {
+  .model-compare { grid-template-columns: 1fr; }
+  .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
 /* ── BÖLÜM BAŞLIĞI ─────────────────────────────────── */
 .sec-head {
   font-size: 0.88rem; font-weight: 700; color: #1E293B;
@@ -1129,19 +1208,40 @@ elif sayfa == "Model":
     krec  = ktp/(ktp+kfn) if (ktp+kfn)>0 else 0
     kf1   = 2*kprec*krec/(kprec+krec) if (kprec+krec)>0 else 0
 
-    m1,m2,m3,m4 = st.columns(4)
-    for kol,l,v,s,cls in [
-        (m1,"Doğruluk",f"{dogr:.1%}","Test seti","green"),
-        (m2,"ROC AUC",f"{auc_val:.3f}","Mükemmel ayrım","orange"),
-        (m3,"Precision",f"{prec:.1%}","Önerilir sınıfı","blue"),
-        (m4,"F1 Skoru",f"{f1:.3f}","Denge metriği","amber"),
-    ]:
-        kol.markdown(f'''
-        <div class="kpi {cls}">
-          <div class="kpi-label">{l}</div>
-          <div class="kpi-num">{v}</div>
-          <div class="kpi-badge neu">{s}</div>
-        </div>''', unsafe_allow_html=True)
+    st.markdown(f"""
+    <div class="model-compare">
+      <div class="model-card product">
+        <div class="model-head">
+          <div>
+            <div class="model-title">Genel Ürün Modeli</div>
+            <div class="model-subtitle">Ürünleri genel performansa göre önerilir / önerilmez olarak ayırır.</div>
+          </div>
+          <div class="model-pill">Ürün seviyesi</div>
+        </div>
+        <div class="metric-grid">
+          <div class="mini-metric"><div class="mini-label">AUC</div><div class="mini-value">{auc_val:.3f}</div></div>
+          <div class="mini-metric"><div class="mini-label">Doğruluk</div><div class="mini-value">{dogr:.1%}</div></div>
+          <div class="mini-metric"><div class="mini-label">Precision</div><div class="mini-value">{prec:.1%}</div></div>
+          <div class="mini-metric"><div class="mini-label">Recall</div><div class="mini-value">{rec:.1%}</div></div>
+        </div>
+      </div>
+      <div class="model-card personal">
+        <div class="model-head">
+          <div>
+            <div class="model-title">Kişiye Özel Satın Alma Modeli</div>
+            <div class="model-subtitle">Belirli müşteri ve ürün çifti için satın alma olasılığı üretir.</div>
+          </div>
+          <div class="model-pill">Müşteri + ürün</div>
+        </div>
+        <div class="metric-grid">
+          <div class="mini-metric"><div class="mini-label">AUC</div><div class="mini-value">{kauc:.3f}</div></div>
+          <div class="mini-metric"><div class="mini-label">Doğruluk</div><div class="mini-value">{kdogr:.1%}</div></div>
+          <div class="mini-metric"><div class="mini-label">Precision</div><div class="mini-value">{kprec:.1%}</div></div>
+          <div class="mini-metric"><div class="mini-label">Recall</div><div class="mini-value">{krec:.1%}</div></div>
+        </div>
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
 
     st.markdown("<br>",unsafe_allow_html=True)
     st.markdown('''<div class="sec-head" style="margin-top:4px">🧭 İki Modelin Rolü</div>''',
@@ -1174,6 +1274,8 @@ elif sayfa == "Model":
     st.caption("📌 Bu iki model aynı işi yapmaz: genel model ürünleri genel performansa göre açıklar, kişisel model ise belirli müşteri için satın alma olasılığı üretir. Bu yüzden metrikler ayrı yorumlanmalıdır.")
 
     st.markdown("<br>",unsafe_allow_html=True)
+    st.markdown('''<div class="sec-head" style="margin-top:4px">📊 Genel Ürün Modeli Grafikleri</div>''',
+                unsafe_allow_html=True)
     c1, c2 = st.columns(2)
     with c1:
         fig = go.Figure(go.Heatmap(
