@@ -295,8 +295,52 @@ header[data-testid="stHeader"] {
   font-weight: 850;
   margin-top: 3px;
 }
+.summary-board {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 12px;
+}
+.summary-card {
+  background: white;
+  border: 1px solid #E2E8F0;
+  border-radius: 14px;
+  padding: 16px 18px;
+  box-shadow: 0 6px 18px rgba(15,23,42,0.06);
+}
+.summary-card.orange { border-top: 4px solid #F97316; }
+.summary-card.blue { border-top: 4px solid #3B82F6; }
+.summary-card.green { border-top: 4px solid #16A34A; }
+.summary-title {
+  font-size: 0.92rem;
+  font-weight: 850;
+  color: #1E293B;
+  margin-bottom: 12px;
+}
+.summary-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid #EEF2F7;
+}
+.summary-row:last-child { border-bottom: 0; padding-bottom: 0; }
+.summary-label {
+  font-size: 0.72rem;
+  color: #64748B;
+  font-weight: 650;
+}
+.summary-value {
+  font-size: 0.98rem;
+  color: #0F172A;
+  font-weight: 850;
+  text-align: right;
+  white-space: nowrap;
+}
 @media (max-width: 1100px) {
   .model-compare { grid-template-columns: 1fr; }
+  .summary-board { grid-template-columns: 1fr; }
   .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
@@ -1190,6 +1234,8 @@ elif sayfa == "Model":
         fi      = pd.read_csv("outputs/ozellik_onemi.csv")
         met     = pd.read_csv("outputs/model_met.csv")
         kcm     = np.load("outputs/kisisel_cm.npy")
+        kfpr    = np.load("outputs/kisisel_roc_fpr.npy")
+        ktpr    = np.load("outputs/kisisel_roc_tpr.npy")
         kmet    = pd.read_csv("outputs/kisisel_model_met.csv")
         auc_val = float(met["auc"].iloc[0])
         dogr    = float(met["dogruluk"].iloc[0])
@@ -1207,6 +1253,7 @@ elif sayfa == "Model":
     kprec = ktp/(ktp+kfp) if (ktp+kfp)>0 else 0
     krec  = ktp/(ktp+kfn) if (ktp+kfn)>0 else 0
     kf1   = 2*kprec*krec/(kprec+krec) if (kprec+krec)>0 else 0
+    sayi_yaz = lambda x: f"{int(x):,}".replace(",", ".")
 
     st.markdown(f"""
     <div class="model-compare">
@@ -1307,6 +1354,62 @@ elif sayfa == "Model":
                          font=dict(color="#334155",size=10)))
         st.plotly_chart(fig, use_container_width=True)
         st.caption("📌 ROC eğrisi modelin önerilir ve önerilmez sınıflarını ayırma gücünü gösterir. AUC değerinin 0.913 olması, modelin rastgele tahminden çok daha güçlü bir ayrım yaptığını gösterir.")
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown('''<div class="sec-head" style="margin-top:8px">👤 Kişiye Özel Satın Alma Modeli Grafikleri</div>''',
+                unsafe_allow_html=True)
+    kc1, kc2 = st.columns(2)
+    with kc1:
+        fig = go.Figure(go.Heatmap(
+            z=[[int(ktn), int(kfp)], [int(kfn), int(ktp)]],
+            x=["Satın almaz", "Satın alır"],
+            y=["Satın almaz", "Satın alır"],
+            text=[
+                [f"TN<br>{sayi_yaz(ktn)}", f"FP<br>{sayi_yaz(kfp)}"],
+                [f"FN<br>{sayi_yaz(kfn)}", f"TP<br>{sayi_yaz(ktp)}"],
+            ],
+            texttemplate="%{text}",
+            textfont=dict(size=13, color="white"),
+            colorscale=[[0, "#DBEAFE"], [0.45, MAVI], [1, LACIVERT]],
+            showscale=False,
+        ))
+        tema(fig, h=290, baslik="Kişisel Model Confusion Matrix",
+             xaxis=dict(**EKSEN, title="Tahmin"),
+             yaxis=dict(**EKSEN, title="Gerçek", autorange="reversed"))
+        st.plotly_chart(fig, use_container_width=True)
+        st.caption(
+            f"📌 Bu grafik müşteri + ürün modeline aittir. Model satın alma yapan çiftlerin "
+            f"{sayi_yaz(ktp)} tanesini doğru yakalamış, yalnızca {sayi_yaz(kfn)} tanesini kaçırmıştır. "
+            f"Buna karşılık {sayi_yaz(kfp)} müşteri-ürün çifti için satın alma olasılığını yüksek görmüştür; "
+            "bu yüzden bu model karar vermekten çok kişisel önerileri sıralamak için kullanılır."
+        )
+    with kc2:
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(
+            x=kfpr, y=ktpr, mode="lines",
+            line=dict(color=YESIL, width=2.5),
+            name=f"ROC (AUC={kauc:.3f})",
+            fill="tozeroy",
+            fillcolor="rgba(22,163,74,0.07)",
+        ))
+        fig.add_trace(go.Scatter(
+            x=[0, 1], y=[0, 1], mode="lines",
+            line=dict(color="#CBD5E1", width=1.5, dash="dash"),
+            name="Rastgele",
+        ))
+        tema(fig, h=290, baslik="Kişisel Model ROC Eğrisi",
+             xaxis=dict(**EKSEN, title="Yanlış Pozitif"),
+             yaxis=dict(**EKSEN, title="Doğru Pozitif"),
+             showlegend=True,
+             legend=dict(x=0.55, y=0.08, bgcolor="rgba(255,255,255,0.95)",
+                         bordercolor="#E2E8F0", borderwidth=1,
+                         font=dict(color="#334155", size=10)))
+        st.plotly_chart(fig, use_container_width=True)
+        st.caption(
+            f"📌 Kişisel modelin AUC değeri {kauc:.3f}. Bu sonuç, modelin satın alan ve satın almayan "
+            "müşteri-ürün çiftlerini genel olarak iyi ayırdığını gösterir. Precision daha düşük olduğu için "
+            "sonuçlar kesin satış kararı gibi değil, öneri önceliklendirmesi olarak okunmalıdır."
+        )
 
     st.markdown('''<div class="sec-head" style="margin-top:8px">🔍 Özellik Önemi</div>''',
                 unsafe_allow_html=True)
@@ -1674,22 +1777,49 @@ elif sayfa == "İstatistik":
     st.caption("📌 Turuncu kesikli çizgi önerilir eşiğini gösterir. Bu eşiğin üzerindeki ürünler genel öneri listesine aday olur; eşik altında kalanlar daha zayıf performans sinyali taşır.")
 
     try:
-        auc_val=float(pd.read_csv("outputs/model_met.csv")["auc"].iloc[0])
-    except: auc_val=0.0
-    ozet=pd.DataFrame({
-        "Metrik":["Toplam Ürün","Önerilen","Eşik","Yorum","Pozitif","Nötr","Negatif",
-                  "Ort. Rating","Ort. Skor","AUC","Müşteri","Şampiyon"],
-        "Değer":[f"{len(urun_df):,}",f"{int(urun_df['onerilir'].sum()):,}",
-                 f"{esik:.4f}",f"{len(duygu_df):,}",
-                 f"{(duygu_df['duygu']=='positive').sum():,}",
-                 f"{(duygu_df['duygu']=='neutral').sum():,}",
-                 f"{(duygu_df['duygu']=='negative').sum():,}",
-                 f"{urun_df['ort_rating'].mean():.2f}/5",
-                 f"{urun_df['oneri_skoru'].mean():.4f}",
-                 f"{auc_val:.3f}",f"{len(rfm_df):,}",
-                 f"{int(rfm_df['segment'].eq('Şampiyon').sum()):,}"],
-    })
-    st.dataframe(ozet,use_container_width=True,hide_index=True)
+        auc_val = float(pd.read_csv("outputs/model_met.csv")["auc"].iloc[0])
+    except Exception:
+        auc_val = 0.0
+    try:
+        kauc_val = float(pd.read_csv("outputs/kisisel_model_met.csv")["auc"].iloc[0])
+    except Exception:
+        kauc_val = 0.0
+
+    pozitif = int((duygu_df["duygu"] == "positive").sum())
+    notr = int((duygu_df["duygu"] == "neutral").sum())
+    negatif = int((duygu_df["duygu"] == "negative").sum())
+    yorum_toplam = len(duygu_df)
+    segmentlenen = len(rfm_df)
+    toplam_musteri = len(musteri_df)
+
+    st.markdown('''<div class="sec-head" style="margin-top:18px">📌 Genel Özet</div>''',
+                unsafe_allow_html=True)
+    st.markdown(f"""
+    <div class="summary-board">
+      <div class="summary-card orange">
+        <div class="summary-title">Ürün ve Skor</div>
+        <div class="summary-row"><span class="summary-label">Toplam ürün</span><span class="summary-value">{len(urun_df):,}</span></div>
+        <div class="summary-row"><span class="summary-label">Önerilen ürün</span><span class="summary-value">{int(urun_df['onerilir'].sum()):,}</span></div>
+        <div class="summary-row"><span class="summary-label">Öneri eşiği</span><span class="summary-value">{esik:.4f}</span></div>
+        <div class="summary-row"><span class="summary-label">Ortalama skor</span><span class="summary-value">{urun_df['oneri_skoru'].mean():.4f}</span></div>
+      </div>
+      <div class="summary-card blue">
+        <div class="summary-title">Yorum ve Duygu</div>
+        <div class="summary-row"><span class="summary-label">Toplam yorum</span><span class="summary-value">{yorum_toplam:,}</span></div>
+        <div class="summary-row"><span class="summary-label">Pozitif / nötr / negatif</span><span class="summary-value">{pozitif:,} / {notr:,} / {negatif:,}</span></div>
+        <div class="summary-row"><span class="summary-label">Pozitif oranı</span><span class="summary-value">%{pozitif/yorum_toplam*100:.1f}</span></div>
+        <div class="summary-row"><span class="summary-label">Ortalama rating</span><span class="summary-value">{urun_df['ort_rating'].mean():.2f}/5</span></div>
+      </div>
+      <div class="summary-card green">
+        <div class="summary-title">Model ve Müşteri</div>
+        <div class="summary-row"><span class="summary-label">Ürün modeli AUC</span><span class="summary-value">{auc_val:.3f}</span></div>
+        <div class="summary-row"><span class="summary-label">Kişisel model AUC</span><span class="summary-value">{kauc_val:.3f}</span></div>
+        <div class="summary-row"><span class="summary-label">Toplam müşteri</span><span class="summary-value">{toplam_musteri:,}</span></div>
+        <div class="summary-row"><span class="summary-label">Segmentlenen / şampiyon</span><span class="summary-value">{segmentlenen:,} / {int(rfm_df['segment'].eq('Şampiyon').sum()):,}</span></div>
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
+    st.caption("📌 Bu özet, üstteki grafiklerde kullanılan ana sayıları tek yerde toplar. Ürün modeli genel ürün performansını, kişisel model ise müşteri-ürün satın alma olasılığını açıklar.")
 
 st.markdown("</div>", unsafe_allow_html=True)
 
