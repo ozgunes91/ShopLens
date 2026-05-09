@@ -1249,9 +1249,12 @@ elif sayfa == "Model":
       <strong>"Bu müşteri bu ürünü satın alır mı?"</strong><br><br>
       Her iki problem de regresyon değil, <em>ikili sınıflandırma</em> problemidir.
       Kullanılan algoritma <strong>Random Forest Classifier</strong>'dır; karar ağaçlarının çoğunluk kararını kullanarak daha kararlı sonuç üretir.<br><br>
-      <strong>Neden "satış oranı" modele dahil edilmedi?</strong> Çünkü hedef etiket, satış oranının da içinde bulunduğu
-      ağırlıklı <strong>öneri skoru</strong> üzerinden oluşturuldu. Satış oranını ayrıca modele vermek,
-      modele cevabın bir parçasını göstermek olurdu. Bu durum <em>veri sızıntısı</em> yaratır ve test sonuçlarını olduğundan iyi gösterebilir.
+      <strong>Veri sızıntısı nasıl önlendi?</strong><br>
+      Genel ürün modelinde <strong>satış oranı</strong> modele verilmedi; çünkü önerilir / önerilmez etiketi
+      satış oranını da dikkate alan ağırlıklı <strong>öneri skoru</strong> üzerinden oluşturuldu.
+      Bu alanı tekrar modele vermek, cevabın bir kısmını modele göstermek olurdu.
+      Kişiye özel modelde ise <strong>satın aldı</strong>, sipariş sonucu ve satış adedi gibi hedefi doğrudan
+      gösteren alanlar modele verilmedi.
     </div>
     """, unsafe_allow_html=True)
 
@@ -1264,6 +1267,7 @@ elif sayfa == "Model":
         kcm     = np.load("outputs/kisisel_cm.npy")
         kfpr    = np.load("outputs/kisisel_roc_fpr.npy")
         ktpr    = np.load("outputs/kisisel_roc_tpr.npy")
+        kfi     = pd.read_csv("outputs/kisisel_ozellik_onemi.csv")
         kmet    = pd.read_csv("outputs/kisisel_model_met.csv")
         auc_val = float(met["auc"].iloc[0])
         dogr    = float(met["dogruluk"].iloc[0])
@@ -1439,24 +1443,63 @@ elif sayfa == "Model":
             "sonuçlar kesin satış kararı gibi değil, öneri önceliklendirmesi olarak okunmalıdır."
         )
 
-    st.markdown('''<div class="sec-head" style="margin-top:8px">🔍 Özellik Önemi</div>''',
+    st.markdown('''<div class="sec-head" style="margin-top:8px">🔍 Model Bazında Özellik Önemi</div>''',
                 unsafe_allow_html=True)
-    fi["ad"] = fi["ozellik"].map(OZELLIK_AD).fillna(fi["ozellik"])
-    fi_s = fi.sort_values("onem")
-    fi_desc = fi.sort_values("onem", ascending=False).reset_index(drop=True)
-    ilk = fi_desc.iloc[0]
-    ikinci = fi_desc.iloc[1] if len(fi_desc) > 1 else fi_desc.iloc[0]
-    rk_fi = [TURUNCU if i==len(fi_s)-1 else MAVI for i in range(len(fi_s))]
-    fig = go.Figure(go.Bar(y=fi_s["ad"],x=fi_s["onem"],orientation="h",
-        marker_color=rk_fi,
-        text=fi_s["onem"].apply(lambda x: f"  %{x*100:.1f}"),
-        textposition="outside",textfont=dict(color="#334155",size=11)))
-    tema(fig, h=295, xaxis=dict(**EKSEN,title="Göreceli Önem",range=[0,0.28]),yaxis=dict(**EKSEN))
-    st.plotly_chart(fig, use_container_width=True)
     st.caption(
-        f"📌 {ilk['ad']} (%{ilk['onem']*100:.1f}) modelde en yüksek ağırlığa sahip. "
-        f"{ikinci['ad']} (%{ikinci['onem']*100:.1f}) ikinci sırada yer alıyor; bu da davranış ve yorum sinyallerinin birlikte çalıştığını gösteriyor."
+        "📌 Özellik önemi ortak değildir. Ürün modeli ürün performansını, kişisel model ise belirli "
+        "müşteri + ürün eşleşmesindeki satın alma ihtimalini açıklar."
     )
+
+    def ozellik_onemi_grafigi(veri, baslik, ana_renk, adet=10):
+        veri = veri.sort_values("onem", ascending=False).head(adet).copy()
+        veri["ad"] = veri["ozellik"].map(OZELLIK_AD).fillna(veri["ozellik"])
+        veri_s = veri.sort_values("onem")
+        renkler = [ana_renk if i == len(veri_s) - 1 else MAVI for i in range(len(veri_s))]
+        ust_sinir = max(float(veri_s["onem"].max()) * 1.18, 0.05)
+
+        fig = go.Figure(go.Bar(
+            y=veri_s["ad"],
+            x=veri_s["onem"],
+            orientation="h",
+            marker_color=renkler,
+            text=veri_s["onem"].apply(lambda x: f"  %{x*100:.1f}"),
+            textposition="outside",
+            textfont=dict(color="#334155", size=11),
+            cliponaxis=False,
+        ))
+        tema(
+            fig,
+            h=max(285, len(veri_s) * 30),
+            baslik=baslik,
+            xaxis=dict(**EKSEN, title="Göreceli Önem", range=[0, ust_sinir]),
+            yaxis=dict(**EKSEN),
+        )
+        fig.update_layout(margin=dict(l=10, r=80, t=45, b=18))
+        return fig, veri.sort_values("onem", ascending=False).reset_index(drop=True)
+
+    of1, of2 = st.columns(2)
+    with of1:
+        fig, fi_desc = ozellik_onemi_grafigi(fi, "Genel Ürün Modeli", TURUNCU, adet=10)
+        st.plotly_chart(fig, use_container_width=True)
+        ilk = fi_desc.iloc[0]
+        ikinci = fi_desc.iloc[1] if len(fi_desc) > 1 else fi_desc.iloc[0]
+        st.caption(
+            f"📌 Bu grafik ürün seviyesindeki modele aittir. {ilk['ad']} (%{ilk['onem']*100:.1f}) "
+            f"en güçlü sinyal; {ikinci['ad']} (%{ikinci['onem']*100:.1f}) ikinci sıradadır. "
+            "Yani genel öneri listesi yalnızca satışa değil, ürünün davranış ve memnuniyet sinyallerine de bakar."
+        )
+
+    with of2:
+        fig, kfi_desc = ozellik_onemi_grafigi(kfi, "Kişiye Özel Satın Alma Modeli", YESIL, adet=10)
+        st.plotly_chart(fig, use_container_width=True)
+        kilk = kfi_desc.iloc[0]
+        kikinci = kfi_desc.iloc[1] if len(kfi_desc) > 1 else kfi_desc.iloc[0]
+        st.caption(
+            f"📌 Bu grafik müşteri + ürün seviyesindeki modele aittir. {kilk['ad']} "
+            f"(%{kilk['onem']*100:.1f}) açık ara baskın sinyal; {kikinci['ad']} "
+            f"(%{kikinci['onem']*100:.1f}) ikinci sıradadır. Bu yüzden kişisel model kesin satış kararı "
+            "vermekten çok, müşteriye gösterilecek ürünleri önceliklendirmek için kullanılmalıdır."
+        )
 
 # =========================================================================
 # SAYFA 6 — DUYGU
