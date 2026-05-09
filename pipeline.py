@@ -803,21 +803,21 @@ def musteri_segmentasyonu(customers, orders, order_items, products):
 
 
 # =============================================================================
-# ADIM 10 — KİŞİYE ÖZEL SATIN ALMA TAHMİNİ
+# ADIM 10 — KİŞİYE ÖZEL ÖNERİ SIRALAMA MODELİ
 # =============================================================================
 
 def kisisel_satin_alma_modeli(events, sessions, orders, order_items, customers,
                                urun_df, rfm_df, musteri_kat):
     """
-    Kişiye özel satın alma tahmini:
+    Kişiye özel öneri sıralama modeli:
 
     Bu modelin sorusu ürün skor modelinden farklıdır.
 
       Ürün skor modeli:
         "Bu ürün genel olarak önerilebilir mi?"
 
-      Kişisel satın alma modeli:
-        "Bu müşteri bu ürünü satın alır mı?"
+      Kişisel öneri modeli:
+        "Bu müşteri için hangi ürünler daha öncelikli önerilmeli?"
 
     Bu nedenle veri seviyesi artık ürün değil, müşteri-ürün çiftidir.
 
@@ -828,11 +828,11 @@ def kisisel_satin_alma_modeli(events, sessions, orders, order_items, customers,
       Müşterinin görüntülediği veya sepete eklediği fakat satın almadığı ürün.
 
     Not:
-      Bir müşterinin hiç görmediği ürünü satın almaması kesin olumsuz tercih
-      anlamına gelmez. Bu yüzden negatif örnekleri özellikle "etkileşim var
-      ama satın alma yok" mantığıyla oluşturuyoruz.
+      Bir müşterinin hiç görmediği ürünü satın almaması tek başına olumsuz
+      tercih anlamına gelmez. Bu yüzden negatif örnekleri özellikle
+      "etkileşim var ama satın alma yok" mantığıyla oluşturuyoruz.
     """
-    print("\n[10/10] Kişiye özel satın alma tahmini modeli...")
+    print("\n[10/10] Kişiye özel öneri sıralama modeli...")
 
     # 1) Müşteri-ürün davranışları: hangi müşteri hangi ürünü gördü/sepete ekledi?
     ev = events.dropna(subset=["product_id"]).copy()

@@ -2,11 +2,11 @@
 
 **Hazırlayan:** Özge Güneş  
 **Ders / Proje:** İSMEK Yapay Zekâ ve Veri Bilimi  
-**Konu:** E-ticaret davranış analizi, ürün öneri skoru, duygu analizi, müşteri segmentasyonu ve kişiye özel satın alma tahmini
+**Konu:** E-ticaret davranış analizi, ürün öneri skoru, duygu analizi, müşteri segmentasyonu ve kişiye özel ürün öneri sıralaması
 
 ## Projenin Amacı
 
-Bu projede bir e-ticaret platformunda müşterilerin ürünlerle olan etkileşimlerini analiz ettim. Amacım yalnızca en çok satan ürünleri listelemek değildi. Ürün görüntüleme, sepete ekleme, sipariş, ürün bilgisi, müşteri bilgisi ve yorum verilerini bir araya getirerek belirli bir müşterinin hangi ürünü satın alma olasılığının daha yüksek olduğunu tahmin eden bir öneri sistemi kurdum.
+Bu projede bir e-ticaret platformunda müşterilerin ürünlerle olan etkileşimlerini analiz ettim. Amacım yalnızca en çok satan ürünleri listelemek değildi. Ürün görüntüleme, sepete ekleme, sipariş, ürün bilgisi, müşteri bilgisi ve yorum verilerini bir araya getirerek belirli bir müşteri için ürünleri öneri önceliğine göre sıralayan bir sistem kurdum.
 
 Dashboard tarafında hem genel ürün performansını hem de seçilen müşteri için kişisel ürün önerilerini tek ekranda takip edilebilir hale getirdim.
 
@@ -79,7 +79,7 @@ Bütün tabloları tek seferde büyük bir tabloya çevirmedim. Çünkü her tab
    Her satır bir ürünü temsil eder. Ürün görüntüleme, sepete ekleme, satış adedi, gelir, yorum sayısı ve rating gibi alanlar bu seviyede özetlenir.
 
 2. **Kişisel model tablosu:** `outputs/kisisel_model_verisi.csv`  
-   Her satır bir müşteri-ürün eşleşmesini temsil eder. Modelin sorusu şudur: “Bu müşteri bu ürünü satın alır mı?”
+   Her satır bir müşteri-ürün eşleşmesini temsil eder. Modelin sorusu şudur: “Bu müşteri için hangi ürünler daha öncelikli önerilmeli?”
 
 Ürün bazlı tabloda hesaplanan `oneri_skoru`, `pozitif_oran`, `sepet_orani`, `ort_rating` gibi ürün sinyalleri daha sonra `product_id` üzerinden kişisel model tablosuna eklendi.
 
@@ -106,7 +106,7 @@ Bu yaklaşım modelin hatalı veya uydurma sinyaller öğrenmesini engelledi.
 5. Ürünler için ağırlıklı `oneri_skoru` hesaplandı.
 6. Skor dağılımının üst %30'undaki ürünler `onerilir=1` olarak işaretlendi.
 7. Müşteriler RFM yöntemiyle segmentlere ayrıldı.
-8. Müşteri-ürün seviyesinde kişiye özel satın alma tahmin modeli kuruldu.
+8. Müşteri-ürün seviyesinde kişiye özel öneri sıralama modeli kuruldu.
 9. Model sonuçları dashboard ve sunumda yorumlanabilir grafiklerle gösterildi.
 
 ## Duygu Analizi
@@ -144,7 +144,7 @@ Projede iki ayrı ikili sınıflandırma modeli kullandım. Bu iki model aynı s
 | Model | Veri seviyesi | Modelin sorusu | Kullanıldığı yer |
 |---|---|---|---|
 | Genel ürün modeli | Ürün | Bu ürün genel olarak önerilmeli mi? | Genel öneriler ve ürün performansı |
-| Kişiye özel satın alma modeli | Müşteri + ürün | Bu müşteri bu ürünü satın alır mı? | Müşteri sekmesindeki kişisel öneriler |
+| Kişiye özel öneri sıralama modeli | Müşteri + ürün | Bu müşteri için hangi ürünler daha öncelikli önerilmeli? | Müşteri sekmesindeki kişisel ürün sıralaması |
 
 Genel ürün modelinde hedef değişken, ağırlıklı `oneri_skoru` değerinin üst %30'luk dilimine göre oluşturuldu:
 
@@ -165,9 +165,9 @@ Her iki modelde de Random Forest kullandım. Karar ağaçları mantığıyla ça
 | Model | AUC | Doğruluk | Precision | Recall | F1 |
 |---|---:|---:|---:|---:|---:|
 | Genel ürün modeli | 0.913 | %84.7 | %73.4 | %76.7 | 0.750 |
-| Kişiye özel satın alma modeli | 0.955 | %88.3 | %48.7 | %99.96 | 0.655 |
+| Kişiye özel öneri sıralama modeli | 0.955 | %88.3 | %48.7 | %99.96 | 0.655 |
 
-Kişisel modelde recall değerinin çok yüksek olması, satın alma yapan müşteri-ürün çiftlerini neredeyse hiç kaçırmadığını gösterir. Precision daha düşüktür; yani model bazı ürünleri olası satın alma olarak işaretleyebilir. Öneri sistemlerinde bu durum izlenmesi gereken bir maliyettir. Gerçek bir iş ortamında böyle bir modelin canlı A/B test ile doğrulanması gerekir.
+Kişisel modelde recall değerinin çok yüksek olması, test verisinde satın alma yapan müşteri-ürün çiftlerinin neredeyse hiç kaçırılmadığını gösterir. Precision daha düşük kaldığı için bu modeli kesin satış kararı gibi değil, müşteriye gösterilecek ürünleri önceliklendiren bir aday sıralama modeli olarak yorumladım. Bu nedenle dashboardda kişisel model çıktıları “öneri önceliği” olarak gösterildi. Özellikle sepete ekleme davranışı güçlü bir sinyal olduğu için gerçek bir iş ortamında model zaman bazlı test ve canlı A/B test ile tekrar doğrulanmalıdır.
 
 ## Görsel Çıktılar
 
