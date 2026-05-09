@@ -804,20 +804,38 @@ st.markdown(f"""
 # LAYOUT: SOL NAV + SAĞ İÇERİK
 # =============================================================================
 SAYFALAR = [
-    ("📊", "Özet"),
-    ("🔍", "EDA"),
-    ("📈", "Analiz"),
-    ("🎯", "Genel Öneriler"),
-    ("🤖", "Model"),
-    ("💬", "Duygu"),
-    ("👤", "Müşteri"),
-    ("⚙️", "İstatistik"),
+    ("📊", "Yönetici Özeti", "Özet"),
+    ("🔍", "Veri Keşfi", "EDA"),
+    ("📈", "Ürün Davranışı", "Analiz"),
+    ("🤖", "Modelleme", "Model"),
+    ("🎯", "Ürün Önerileri", "Genel Öneriler"),
+    ("💬", "Yorum Duygusu", "Duygu"),
+    ("👤", "Kişisel Öneri", "Müşteri"),
+    ("⚙️", "Sistem Özeti", "İstatistik"),
 ]
 
-sayfa = st.session_state.get("s", "Özet")
-if sayfa == "Öneriler":
-    sayfa = "Genel Öneriler"
-    st.session_state["s"] = sayfa
+SAYFA_ALIASES = {
+    "Özet": "Özet",
+    "Yönetici Özeti": "Özet",
+    "EDA": "EDA",
+    "Veri Keşfi": "EDA",
+    "Analiz": "Analiz",
+    "Ürün Davranışı": "Analiz",
+    "Model": "Model",
+    "Modelleme": "Model",
+    "Öneriler": "Genel Öneriler",
+    "Genel Öneriler": "Genel Öneriler",
+    "Ürün Önerileri": "Genel Öneriler",
+    "Duygu": "Duygu",
+    "Yorum Duygusu": "Duygu",
+    "Müşteri": "Müşteri",
+    "Kişisel Öneri": "Müşteri",
+    "İstatistik": "İstatistik",
+    "Sistem Özeti": "İstatistik",
+}
+
+sayfa = SAYFA_ALIASES.get(st.session_state.get("s", "Özet"), "Özet")
+st.session_state["s"] = sayfa
 
 # ── Sidebar navigasyon — her zaman solda sabit, boşluk sorunu yok ──────────
 with st.sidebar:
@@ -834,10 +852,10 @@ with st.sidebar:
                 text-transform:uppercase;letter-spacing:0.1em;
                 margin-bottom:10px">Navigasyon</div>
     """, unsafe_allow_html=True)
-    for icon, isim in SAYFALAR:
-        if st.button(f"{icon}  {isim}", key=f"nav_{isim}", use_container_width=True):
-            st.session_state["s"] = isim
-            sayfa = isim
+    for icon, etiket, hedef in SAYFALAR:
+        if st.button(f"{icon}  {etiket}", key=f"nav_{hedef}", use_container_width=True):
+            st.session_state["s"] = hedef
+            sayfa = hedef
     st.markdown("""
     <div style="position:fixed;bottom:20px;left:0;width:245px;
                 padding:12px 16px;font-size:0.6rem;color:#CBD5E1;
