@@ -627,7 +627,13 @@ ADIM_AD = {"page_view":"👀 Sayfa Görüntüleme","add_to_cart":"🛒 Sepete Ek
 OZELLIK_AD = {"sepet_orani":"Sepete Ekleme Oranı","ort_rating":"Müşteri Puanı",
               "ort_yildiz":"Duygu Skoru","margin_usd":"Ürün Marjı",
               "price_usd":"Fiyat","page_view":"Sayfa Görüntüleme",
-              "yorum_sayisi":"Yorum Sayısı"}
+              "yorum_sayisi":"Yorum Sayısı","add_to_cart":"Sepete Ekleme",
+              "monetary":"Toplam Harcama","recency":"Son Alışveriş Süresi",
+              "kategori_ilgi_orani":"Kategori İlgi Oranı",
+              "frequency":"Sipariş Sıklığı","R":"Güncellik Skoru",
+              "F":"Frekans Skoru","M":"Harcama Skoru","age":"Yaş",
+              "oneri_skoru":"Genel Öneri Skoru",
+              "pozitif_oran":"Pozitif Yorum Oranı"}
 
 
 @st.cache_resource
