@@ -10,6 +10,7 @@ import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
+import streamlit.components.v1 as components
 from pathlib import Path
 from sklearn.preprocessing import MinMaxScaler
 from joblib import load
@@ -528,6 +529,27 @@ section[data-testid="stSidebar"] > div {
 hr { border-color: #E2E8F0 !important; margin: 16px 0 !important; }
 </style>
 """, unsafe_allow_html=True)
+
+# Streamlit'in kendi "C = cache temizle" kısayolu bazen Command+C ile çakışabiliyor.
+# Bu küçük parça sadece kopyalama kısayolunun uygulama kısayolu gibi algılanmasını engeller.
+components.html(
+    """
+    <script>
+    (function () {
+      function stopStreamlitCopyShortcut(event) {
+        const key = (event.key || "").toLowerCase();
+        if ((event.metaKey || event.ctrlKey) && key === "c") {
+          event.stopPropagation();
+        }
+      }
+      const doc = window.parent.document;
+      doc.addEventListener("keydown", stopStreamlitCopyShortcut, true);
+      doc.addEventListener("keyup", stopStreamlitCopyShortcut, true);
+    })();
+    </script>
+    """,
+    height=0,
+)
 
 # =============================================================================
 # GRAFİK TEMA
@@ -1610,10 +1632,36 @@ elif sayfa == "Müşteri":
         st.markdown("<div style='margin-top:28px'></div>", unsafe_allow_html=True)
         ara_btn = st.button("🔍 Öner", use_container_width=True)
 
+    secim_kaynak = (
+        rfm_df.merge(
+            musteri_df[["customer_id", "name", "country", "age"]],
+            on="customer_id",
+            how="left",
+        )
+        .sort_values("monetary", ascending=False)
+        .head(30)
+    )
+    secim_map = {"Seçim yapma": None}
+    for _, sat in secim_kaynak.iterrows():
+        etiket = (
+            f'{int(sat["customer_id"])} | {sat.get("name", "")} | '
+            f'{sat.get("segment", "?")} | ${float(sat.get("monetary", 0)):,.0f}'
+        )
+        secim_map[etiket] = int(sat["customer_id"])
+
+    hizli_secim = st.selectbox(
+        "Kopyalamadan hızlı müşteri seç",
+        list(secim_map.keys()),
+        key="hizli_musteri_secimi",
+    )
+    arama_degeri = girdi.strip() if isinstance(girdi, str) else ""
+    if not arama_degeri and secim_map.get(hizli_secim) is not None:
+        arama_degeri = str(secim_map[hizli_secim])
+
     # Enter tuşu VEYA buton tıklaması ile çalışır
-    if girdi:
-        try: cid=int(girdi); satir=musteri_df[musteri_df["customer_id"]==cid]
-        except: satir=musteri_df[musteri_df["name"].str.lower().str.contains(girdi.lower(),na=False)]
+    if arama_degeri:
+        try: cid=int(arama_degeri); satir=musteri_df[musteri_df["customer_id"]==cid]
+        except: satir=musteri_df[musteri_df["name"].str.lower().str.contains(arama_degeri.lower(),na=False)]
         if satir.empty: st.warning("Bulunamadı.")
         else:
             m=satir.iloc[0]; cid=int(m["customer_id"])
