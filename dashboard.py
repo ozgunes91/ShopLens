@@ -1632,31 +1632,7 @@ elif sayfa == "Müşteri":
         st.markdown("<div style='margin-top:28px'></div>", unsafe_allow_html=True)
         ara_btn = st.button("🔍 Öner", use_container_width=True)
 
-    secim_kaynak = (
-        rfm_df.merge(
-            musteri_df[["customer_id", "name", "country", "age"]],
-            on="customer_id",
-            how="left",
-        )
-        .sort_values("monetary", ascending=False)
-        .head(30)
-    )
-    secim_map = {"Seçim yapma": None}
-    for _, sat in secim_kaynak.iterrows():
-        etiket = (
-            f'{int(sat["customer_id"])} | {sat.get("name", "")} | '
-            f'{sat.get("segment", "?")} | ${float(sat.get("monetary", 0)):,.0f}'
-        )
-        secim_map[etiket] = int(sat["customer_id"])
-
-    hizli_secim = st.selectbox(
-        "Kopyalamadan hızlı müşteri seç",
-        list(secim_map.keys()),
-        key="hizli_musteri_secimi",
-    )
     arama_degeri = girdi.strip() if isinstance(girdi, str) else ""
-    if not arama_degeri and secim_map.get(hizli_secim) is not None:
-        arama_degeri = str(secim_map[hizli_secim])
 
     # Enter tuşu VEYA buton tıklaması ile çalışır
     if arama_degeri:
