@@ -1718,8 +1718,47 @@ elif sayfa == "Müşteri":
                           </div>
                         </div>''', unsafe_allow_html=True)
     else:
-        sec_seg=st.selectbox("Segment seç",list(SEG_RENK.keys()))
-        liste=(rfm_df[rfm_df["segment"]==sec_seg].sort_values("monetary",ascending=False).head(10))
+        segment_secimleri = ["Tüm segmentler"] + list(SEG_RENK.keys())
+        sec_seg = st.selectbox("Segment seç", segment_secimleri)
+        if sec_seg == "Tüm segmentler":
+            liste_tum = rfm_df.sort_values(["segment", "monetary"], ascending=[True, False]).copy()
+        else:
+            liste_tum = (
+                rfm_df[rfm_df["segment"] == sec_seg]
+                .sort_values("monetary", ascending=False)
+                .copy()
+            )
+
+        st.markdown(f"""
+        <div class="info-box">
+          Bu tabloda <strong>{len(liste_tum):,}</strong> müşteri var.
+          Önce müşteriyi seçip arama alanına adını veya ID bilgisini yazabilirsin.
+          İstersen görünen liste için toplu öneri çıktısı da oluşturabilirsin.
+        </div>
+        """, unsafe_allow_html=True)
+
+        l_kol, o_kol, b_kol = st.columns([1.2, 1.1, 1.2])
+        with l_kol:
+            gorunen_adet = st.selectbox(
+                "Listede kaç müşteri görünsün?",
+                ["10", "25", "50", "100", "250", "Tümü"],
+                index=2,
+            )
+        with o_kol:
+            toplu_oneri_adedi = st.selectbox(
+                "Kişi başı öneri",
+                [1, 2, 3],
+                index=2,
+            )
+        with b_kol:
+            st.markdown("<div style='margin-top:28px'></div>", unsafe_allow_html=True)
+            toplu_btn = st.button("Toplu öneri oluştur", use_container_width=True)
+
+        if gorunen_adet == "Tümü":
+            liste = liste_tum.copy()
+        else:
+            liste = liste_tum.head(int(gorunen_adet)).copy()
+
         mev=[c for c in ["customer_id","name","country","age","recency","frequency","monetary","segment"] if c in liste.columns]
         g=liste[mev].copy()
         if "monetary" in g.columns: g["monetary"]=g["monetary"].apply(lambda x:f"${x:,.0f}")
@@ -1727,6 +1766,56 @@ elif sayfa == "Müşteri":
                      "recency":"Recency","frequency":"Sipariş","monetary":"Harcama",
                      "segment":"Segment"}.get(c,c) for c in g.columns]
         st.dataframe(g,use_container_width=True,hide_index=True)
+
+        st.download_button(
+            "Müşteri listesini CSV indir",
+            data=g.to_csv(index=False).encode("utf-8-sig"),
+            file_name=f"{sec_seg.lower().replace(' ', '_')}_musteri_listesi.csv",
+            mime="text/csv",
+            use_container_width=True,
+        )
+
+        if toplu_btn:
+            if liste.empty:
+                st.warning("Bu seçim için müşteri bulunamadı.")
+            else:
+                kaynak = liste.copy()
+                if len(kaynak) > 120:
+                    st.warning(
+                        "Canlı dashboardun yavaşlamaması için toplu öneri ilk 120 müşteriyle "
+                        "sınırlandırıldı. Tüm müşteri tabanı için öneri üretimi pipeline tarafında "
+                        "CSV çıktısı olarak hazırlanmalıdır."
+                    )
+                    kaynak = kaynak.head(120)
+
+                cikti = []
+                ilerleme = st.progress(0)
+                with st.spinner("Seçilen müşteriler için öneriler hazırlanıyor..."):
+                    for i, satir in enumerate(kaynak.itertuples(index=False), start=1):
+                        oneriler = kisisel_satin_alma_tahmini(
+                            int(satir.customer_id),
+                            adet=int(toplu_oneri_adedi),
+                        )
+                        kayit = {
+                            "ID": int(satir.customer_id),
+                            "Ad": satir.name,
+                            "Segment": satir.segment,
+                        }
+                        for sira, (_, urun) in enumerate(oneriler.iterrows(), start=1):
+                            kayit[f"Öneri {sira}"] = urun.get("name", "")
+                            kayit[f"Olasılık {sira}"] = f"%{float(urun.get('satin_alma_olasiligi', 0))*100:.1f}"
+                        cikti.append(kayit)
+                        ilerleme.progress(i / len(kaynak))
+
+                toplu_df = pd.DataFrame(cikti)
+                st.dataframe(toplu_df, use_container_width=True, hide_index=True)
+                st.download_button(
+                    "Toplu önerileri CSV indir",
+                    data=toplu_df.to_csv(index=False).encode("utf-8-sig"),
+                    file_name=f"{sec_seg.lower().replace(' ', '_')}_toplu_oneri.csv",
+                    mime="text/csv",
+                    use_container_width=True,
+                )
 
 # =========================================================================
 # SAYFA 8 — İSTATİSTİK
