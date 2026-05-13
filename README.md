@@ -106,8 +106,9 @@ Bu yaklaşım modelin hatalı veya uydurma sinyaller öğrenmesini engelledi.
 5. Ürünler için ağırlıklı `oneri_skoru` hesaplandı.
 6. Skor dağılımının üst %30'undaki ürünler `onerilir=1` olarak işaretlendi.
 7. Müşteriler RFM yöntemiyle segmentlere ayrıldı.
-8. Müşteri-ürün seviyesinde kişiye özel öneri sıralama modeli kuruldu.
-9. Model sonuçları dashboard ve sunumda yorumlanabilir grafiklerle gösterildi.
+8. Segmentlerin kategori alışveriş payları gerçek sipariş adetleri üzerinden hesaplandı.
+9. Müşteri-ürün seviyesinde kişiye özel öneri sıralama modeli kuruldu.
+10. Model sonuçları dashboard ve sunumda yorumlanabilir grafiklerle gösterildi.
 
 ## Duygu Analizi
 
@@ -196,7 +197,7 @@ Dashboard Streamlit ile hazırlandı. Ana bölümler:
 - Genel ürün önerileri
 - Model değerlendirmesi
 - Duygu analizi
-- Müşteri segmentasyonu ve kişisel öneri
+- Müşteri segmentasyonu, segment bazlı kategori tercihleri ve kişisel öneri
 - İstatistiksel analizler
 
 Canlı dashboard:

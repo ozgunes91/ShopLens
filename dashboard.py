@@ -1686,6 +1686,98 @@ elif sayfa == "Müşteri":
     seg_o["Toplam"]=seg_o["Toplam"].apply(lambda x:f"${x:,.0f}")
     st.dataframe(seg_o,use_container_width=True,hide_index=True)
 
+    st.markdown("<br>",unsafe_allow_html=True)
+    st.markdown('''<div class="sec-head">🧺 Segmentlere Göre Kategori Tercihleri <span class="sec-tag">Satış Payı</span></div>''',
+                unsafe_allow_html=True)
+    st.markdown("""
+    <div class="info-box">
+      Bu bölümde her segmentin hangi ürün kategorilerinden alışveriş yaptığı gösterilir.
+      Oranlar, müşterilerin gerçek sipariş kalemlerindeki <strong>satış adetleri</strong> üzerinden hesaplanır.
+    </div>
+    """, unsafe_allow_html=True)
+
+    seg_kat = (
+        mkat_df.merge(rfm_df[["customer_id","segment"]], on="customer_id", how="inner")
+        .groupby(["segment","category"], as_index=False)
+        .agg(satis_adedi=("quantity","sum"))
+    )
+    seg_kat["segment_toplam"] = seg_kat.groupby("segment")["satis_adedi"].transform("sum")
+    seg_kat["kategori_payi"] = np.where(
+        seg_kat["segment_toplam"] > 0,
+        seg_kat["satis_adedi"] / seg_kat["segment_toplam"],
+        0
+    )
+
+    segment_sira = [s for s in ["Şampiyon","Sadık","Risk Altında","Kayıp","Yeni","Potansiyel"]
+                    if s in seg_kat["segment"].unique()]
+    kategori_sira = (
+        seg_kat.groupby("category")["satis_adedi"]
+        .sum().sort_values(ascending=False).index.tolist()
+    )
+    pay_pivot = (
+        seg_kat.pivot(index="segment", columns="category", values="kategori_payi")
+        .reindex(index=segment_sira, columns=kategori_sira)
+        .fillna(0)
+    )
+
+    k1,k2=st.columns([1.15,0.85])
+    with k1:
+        yazi = np.array([[f"%{v*100:.1f}" for v in row] for row in pay_pivot.values])
+        fig=go.Figure(data=go.Heatmap(
+            z=pay_pivot.values,
+            x=pay_pivot.columns,
+            y=pay_pivot.index,
+            text=yazi,
+            texttemplate="%{text}",
+            textfont=dict(size=10,color="#1E293B"),
+            colorscale=[[0,"#F8FAFC"],[0.45,"#BFDBFE"],[1,TURUNCU]],
+            colorbar=dict(title="Pay",tickformat=".0%"),
+            hovertemplate="Segment: %{y}<br>Kategori: %{x}<br>Pay: %{z:.1%}<extra></extra>"
+        ))
+        tema(fig,h=330,baslik="Segment - Kategori Pay Haritası",
+             xaxis=dict(**EKSEN,title="Kategori"),
+             yaxis=dict(**EKSEN,title="Segment"))
+        st.plotly_chart(fig,use_container_width=True)
+
+    with k2:
+        sec_segment = st.selectbox("Detay için segment seç", segment_sira, key="segment_kategori_detay")
+        detay = (
+            seg_kat[seg_kat["segment"] == sec_segment]
+            .sort_values("kategori_payi", ascending=True)
+        )
+        fig=go.Figure(go.Bar(
+            x=detay["kategori_payi"],
+            y=detay["category"],
+            orientation="h",
+            marker_color=[TURUNCU if i == len(detay)-1 else MAVI for i in range(len(detay))],
+            text=[f"%{v*100:.1f}" for v in detay["kategori_payi"]],
+            textposition="outside",
+            textfont=dict(color="#334155",size=10),
+            hovertemplate="Kategori: %{y}<br>Pay: %{x:.1%}<extra></extra>"
+        ))
+        ust_sinir = max(0.35, float(detay["kategori_payi"].max()) * 1.22)
+        tema(fig,h=330,baslik=f"{sec_segment} Segmentinde Kategori Payı",
+             xaxis=dict(**EKSEN,title="Segment İçindeki Satış Payı",tickformat=".0%",
+                        range=[0,ust_sinir]),
+             yaxis=dict(**EKSEN,title="Kategori"))
+        st.plotly_chart(fig,use_container_width=True)
+
+    if not seg_kat.empty:
+        en_yuksek = seg_kat.loc[seg_kat["kategori_payi"].idxmax()]
+        sec_detay = seg_kat[seg_kat["segment"] == sec_segment].sort_values("kategori_payi", ascending=False)
+        birinci = sec_detay.iloc[0]
+        ikinci = sec_detay.iloc[1] if len(sec_detay) > 1 else None
+        ikinci_txt = (
+            f", ikinci sırada {ikinci['category']} (%{ikinci['kategori_payi']*100:.1f}) var"
+            if ikinci is not None else ""
+        )
+        st.caption(
+            f"📌 En belirgin segment-kategori yoğunluğu {en_yuksek['segment']} segmentinde "
+            f"{en_yuksek['category']} kategorisinde (%{en_yuksek['kategori_payi']*100:.1f}) görülüyor. "
+            f"Seçili {sec_segment} segmentinde en yüksek pay {birinci['category']} "
+            f"(%{birinci['kategori_payi']*100:.1f}){ikinci_txt}."
+        )
+
     st.markdown("<hr>",unsafe_allow_html=True)
     st.markdown('''<div class="sec-head">🎯 Kişiye Özel Ürün Önerisi</div>''',
                 unsafe_allow_html=True)
