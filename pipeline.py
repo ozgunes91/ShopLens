@@ -568,10 +568,18 @@ def duygu_analizi(reviews):
     )
     df.to_csv("outputs/duygu.csv", index=False)
 
+    yorum_ozet = pd.DataFrame([{
+        "toplam_yorum": len(df),
+        "benzersiz_yorum_metni": df["review_text"].nunique(),
+        "benzersiz_yorum_orani": df["review_text"].nunique() / len(df) if len(df) else 0,
+    }])
+    yorum_ozet.to_csv("outputs/duygu_metin_ozeti.csv", index=False)
+
     dagılim = df["duygu"].value_counts()
     print(f"  Pozitif: {dagılim.get('positive',0):,}  "
           f"Nötr: {dagılim.get('neutral',0):,}  "
           f"Negatif: {dagılim.get('negative',0):,}")
+    print(f"  Benzersiz yorum metni: {df['review_text'].nunique():,}/{len(df):,}")
     return df
 
 
@@ -938,14 +946,18 @@ def kisisel_satin_alma_modeli(events, sessions, orders, order_items, customers,
     veri["recency"] = veri["recency"].fillna(veri["recency"].max() + 365)
     for kolon in [
         "frequency", "monetary", "R", "F", "M", "age", "price_usd",
-        "margin_usd", "ort_rating", "pozitif_oran", "oneri_skoru", "sepet_orani",
+        "margin_usd", "ort_rating", "pozitif_oran",
     ]:
         veri[kolon] = veri[kolon].fillna(0)
 
+    # Not:
+    # oneri_skoru ve ürün bazlı sepet_orani genel ürün performansını özetler.
+    # Kişisel modelde bunları kullanmak, ürünün geçmiş satış/sepet başarısını
+    # müşteri-ürün tahminine fazla yakından taşır. Bu yüzden kişisel model daha
+    # temiz bir kurgu için müşteri davranışı, RFM ve temel ürün sinyalleriyle eğitilir.
     ozellikler = [
         "page_view", "add_to_cart",
         "price_usd", "margin_usd", "ort_rating", "pozitif_oran",
-        "oneri_skoru", "sepet_orani",
         "recency", "frequency", "monetary", "R", "F", "M", "age",
         "kategori_ilgi_orani",
     ]
