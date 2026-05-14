@@ -184,9 +184,13 @@ Pipeline çalıştırıldığında dashboard ve sunumda kullanılan görseller `
 | <img src="outputs/charts/05_gelir.png" width="420"> | Ürünlerin gelir katkısı ve ticari performans görünümü |
 | <img src="outputs/charts/06_cm.png" width="420"> | Genel ürün öneri modelinin confusion matrix çıktısı |
 | <img src="outputs/charts/07_roc.png" width="420"> | Genel ürün öneri modelinin ROC eğrisi |
-| <img src="outputs/charts/08_onem.png" width="420"> | Modelde kullanılan değişkenlerin göreceli önemleri |
+| <img src="outputs/charts/08_onem.png" width="420"> | Genel ürün modelinde kullanılan değişkenlerin göreceli önemleri |
 | <img src="outputs/charts/09_rfm.png" width="420"> | RFM müşteri segmentlerinin dağılımı |
 | <img src="outputs/charts/10_rfm_scatter.png" width="420"> | RFM segmentlerinin recency ve harcama eksenindeki görünümü |
+| <img src="outputs/charts/11_kisisel_cm.png" width="420"> | Kişiye özel satın alma modelinin confusion matrix çıktısı |
+| <img src="outputs/charts/12_kisisel_roc.png" width="420"> | Kişiye özel satın alma modelinin ROC eğrisi |
+| <img src="outputs/charts/13_kisisel_onem.png" width="420"> | Kişiye özel modelde kullanılan değişkenlerin göreceli önemleri |
+| <img src="outputs/charts/14_segment_kategori.png" width="420"> | RFM segmentlerinin kategori bazlı satış payları |
 
 ## Dashboard
 
