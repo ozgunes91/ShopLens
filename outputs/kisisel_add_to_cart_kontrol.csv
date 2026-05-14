@@ -1,0 +1,5 @@
+metrik,deger,aciklama
+add_to_cart_ozellik_onemi,0.8051165090481655,Ana kişisel modelde add_to_cart alanının göreceli özellik önemi.
+auc_farki_tam_eksi_kontrol,0.20230756636934477,Random Forest modelinde add_to_cart dahilken AUC farkı.
+recall_farki_tam_eksi_kontrol,0.14618097951431286,Random Forest modelinde add_to_cart dahilken recall farkı.
+precision_farki_tam_eksi_kontrol,0.30032201744756915,Random Forest modelinde add_to_cart dahilken precision farkı.

@@ -47,11 +47,14 @@ import matplotlib.patches as mpatches
 from pathlib import Path
 from datetime import datetime
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import (
     classification_report, confusion_matrix,
     accuracy_score, roc_curve, auc as sk_auc,
+    precision_score, recall_score, f1_score,
 )
+from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from joblib import dump
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
@@ -987,6 +990,138 @@ def kisisel_satin_alma_modeli(events, sessions, orders, order_items, customers,
         .sort_values("onem", ascending=False)
     )
     fi.to_csv("outputs/kisisel_ozellik_onemi.csv", index=False)
+
+    # add_to_cart kişisel model için çok güçlü bir davranış sinyalidir.
+    # Bu yüzden ayrıca "bu alan çıkarılırsa model ne kadar değişiyor?" kontrolü yapılır.
+    def model_metrikleri(model_adi, senaryo, egitilmis_model, x_test, y_test,
+                         add_to_cart_dahil, aciklama):
+        tahmin_lokal = egitilmis_model.predict(x_test)
+        olasilik_lokal = egitilmis_model.predict_proba(x_test)[:, 1]
+        tn_l, fp_l, fn_l, tp_l = confusion_matrix(
+            y_test, tahmin_lokal, labels=[0, 1]
+        ).ravel()
+        fpr_l, tpr_l, _ = roc_curve(y_test, olasilik_lokal)
+
+        return {
+            "model": model_adi,
+            "senaryo": senaryo,
+            "add_to_cart_dahil": add_to_cart_dahil,
+            "auc": sk_auc(fpr_l, tpr_l),
+            "dogruluk": accuracy_score(y_test, tahmin_lokal),
+            "precision": precision_score(y_test, tahmin_lokal, zero_division=0),
+            "recall": recall_score(y_test, tahmin_lokal, zero_division=0),
+            "f1": f1_score(y_test, tahmin_lokal, zero_division=0),
+            "tn": tn_l,
+            "fp": fp_l,
+            "fn": fn_l,
+            "tp": tp_l,
+            "aciklama": aciklama,
+        }
+
+    ozellikler_erken = [kolon for kolon in ozellikler if kolon != "add_to_cart"]
+
+    rf_erken = RandomForestClassifier(
+        n_estimators=180,
+        max_depth=10,
+        class_weight="balanced",
+        random_state=42,
+        n_jobs=-1,
+    )
+    rf_erken.fit(X_tr[ozellikler_erken], y_tr)
+
+    lojistik_tam = make_pipeline(
+        StandardScaler(),
+        LogisticRegression(max_iter=1000, class_weight="balanced", random_state=42),
+    )
+    lojistik_tam.fit(X_tr, y_tr)
+
+    lojistik_erken = make_pipeline(
+        StandardScaler(),
+        LogisticRegression(max_iter=1000, class_weight="balanced", random_state=42),
+    )
+    lojistik_erken.fit(X_tr[ozellikler_erken], y_tr)
+
+    karsilastirma = pd.DataFrame([
+        model_metrikleri(
+            "Random Forest",
+            "Davranış sinyalleri dahil",
+            model,
+            X_te,
+            y_te,
+            True,
+            "Ana kişisel öneri modeli. Sepete ekleme sinyalini de kullanır.",
+        ),
+        model_metrikleri(
+            "Random Forest",
+            "add_to_cart hariç kontrol",
+            rf_erken,
+            X_te[ozellikler_erken],
+            y_te,
+            False,
+            "Sepete ekleme etkisini görmek için add_to_cart alanı çıkarılmıştır.",
+        ),
+        model_metrikleri(
+            "Lojistik Regresyon",
+            "Davranış sinyalleri dahil",
+            lojistik_tam,
+            X_te,
+            y_te,
+            True,
+            "Karşılaştırma için daha basit ve okunabilir bir doğrusal model.",
+        ),
+        model_metrikleri(
+            "Lojistik Regresyon",
+            "add_to_cart hariç kontrol",
+            lojistik_erken,
+            X_te[ozellikler_erken],
+            y_te,
+            False,
+            "Basit modelde add_to_cart çıkarıldığında performansın nasıl değiştiğini gösterir.",
+        ),
+    ])
+    karsilastirma.to_csv("outputs/kisisel_model_karsilastirma.csv", index=False)
+
+    rf_tam = karsilastirma[
+        (karsilastirma["model"] == "Random Forest")
+        & (karsilastirma["add_to_cart_dahil"])
+    ].iloc[0]
+    rf_kontrol = karsilastirma[
+        (karsilastirma["model"] == "Random Forest")
+        & (~karsilastirma["add_to_cart_dahil"])
+    ].iloc[0]
+    add_to_cart_onemi = float(
+        fi.loc[fi["ozellik"] == "add_to_cart", "onem"].iloc[0]
+    ) if "add_to_cart" in set(fi["ozellik"]) else 0.0
+
+    pd.DataFrame([
+        {
+            "metrik": "add_to_cart_ozellik_onemi",
+            "deger": add_to_cart_onemi,
+            "aciklama": "Ana kişisel modelde add_to_cart alanının göreceli özellik önemi.",
+        },
+        {
+            "metrik": "auc_farki_tam_eksi_kontrol",
+            "deger": float(rf_tam["auc"] - rf_kontrol["auc"]),
+            "aciklama": "Random Forest modelinde add_to_cart dahilken AUC farkı.",
+        },
+        {
+            "metrik": "recall_farki_tam_eksi_kontrol",
+            "deger": float(rf_tam["recall"] - rf_kontrol["recall"]),
+            "aciklama": "Random Forest modelinde add_to_cart dahilken recall farkı.",
+        },
+        {
+            "metrik": "precision_farki_tam_eksi_kontrol",
+            "deger": float(rf_tam["precision"] - rf_kontrol["precision"]),
+            "aciklama": "Random Forest modelinde add_to_cart dahilken precision farkı.",
+        },
+    ]).to_csv("outputs/kisisel_add_to_cart_kontrol.csv", index=False)
+
+    print("  Kişisel model karşılaştırması kaydedildi.")
+    print(
+        "  add_to_cart önem kontrolü: "
+        f"{add_to_cart_onemi:.1%} | "
+        f"AUC farkı: {float(rf_tam['auc'] - rf_kontrol['auc']):.3f}"
+    )
 
     # Dashboard hızlı çalışsın diye müşteri-ürün davranış özeti ayrıca kaydedilir.
     davranis.to_csv("outputs/musteri_urun_davranis.csv", index=False)

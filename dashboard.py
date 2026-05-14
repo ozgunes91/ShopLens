@@ -1298,6 +1298,13 @@ elif sayfa == "Model":
         st.warning("Model çıktısı yok. `python pipeline.py` çalıştırın.")
         st.stop()
 
+    try:
+        kars = pd.read_csv("outputs/kisisel_model_karsilastirma.csv")
+        kontrol = pd.read_csv("outputs/kisisel_add_to_cart_kontrol.csv")
+    except FileNotFoundError:
+        kars = pd.DataFrame()
+        kontrol = pd.DataFrame()
+
     tn,fp,fn,tp = cm.ravel()
     prec = tp/(tp+fp) if (tp+fp)>0 else 0
     rec  = tp/(tp+fn) if (tp+fn)>0 else 0
@@ -1382,6 +1389,66 @@ elif sayfa == "Model":
       <strong>öncelik sırasına koyan bir öneri skoru</strong> olarak yorumlanmalıdır.
     </div>
     """, unsafe_allow_html=True)
+
+    if not kars.empty:
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown('''<div class="sec-head" style="margin-top:8px">🧪 Kişisel Model Kontrolü</div>''',
+                    unsafe_allow_html=True)
+
+        kars_goster = kars.copy()
+        kars_goster["add_to_cart"] = np.where(
+            kars_goster["add_to_cart_dahil"], "Dahil", "Hariç"
+        )
+        for kolon in ["auc", "dogruluk", "precision", "recall", "f1"]:
+            kars_goster[kolon] = kars_goster[kolon].astype(float)
+        tablo = kars_goster[
+            ["model", "senaryo", "add_to_cart", "auc", "dogruluk", "precision", "recall", "f1"]
+        ].rename(columns={
+            "model": "Model",
+            "senaryo": "Senaryo",
+            "add_to_cart": "add_to_cart",
+            "auc": "AUC",
+            "dogruluk": "Doğruluk",
+            "precision": "Precision",
+            "recall": "Recall",
+            "f1": "F1",
+        })
+        tablo["AUC"] = tablo["AUC"].map(lambda x: f"{x:.3f}")
+        for kolon in ["Doğruluk", "Precision", "Recall"]:
+            tablo[kolon] = tablo[kolon].map(lambda x: f"{x:.1%}")
+        tablo["F1"] = tablo["F1"].map(lambda x: f"{x:.3f}")
+        st.dataframe(tablo, use_container_width=True, hide_index=True)
+
+        rf_satir = kars[
+            (kars["model"] == "Random Forest") & (kars["add_to_cart_dahil"])
+        ]
+        rf_kontrol = kars[
+            (kars["model"] == "Random Forest") & (~kars["add_to_cart_dahil"])
+        ]
+        if not rf_satir.empty and not rf_kontrol.empty:
+            rf_satir = rf_satir.iloc[0]
+            rf_kontrol = rf_kontrol.iloc[0]
+            auc_fark = float(rf_satir["auc"] - rf_kontrol["auc"])
+            recall_fark = float(rf_satir["recall"] - rf_kontrol["recall"])
+            precision_fark = float(rf_satir["precision"] - rf_kontrol["precision"])
+            add_onem = None
+            if not kontrol.empty and "add_to_cart_ozellik_onemi" in set(kontrol["metrik"]):
+                add_onem = float(
+                    kontrol.loc[
+                        kontrol["metrik"] == "add_to_cart_ozellik_onemi", "deger"
+                    ].iloc[0]
+                )
+            add_cumle = (
+                f" add_to_cart alanının özellik önemi %{add_onem*100:.1f}."
+                if add_onem is not None else ""
+            )
+            st.caption(
+                "📌 Bu kontrol, kişisel modelin sepete ekleme sinyaline ne kadar yaslandığını gösterir."
+                f"{add_cumle} Alan çıkarıldığında Random Forest AUC farkı {auc_fark:+.3f}, "
+                f"recall farkı {recall_fark:+.1%}, precision farkı {precision_fark:+.1%}. "
+                "Bu nedenle yüksek recall tek başına başarı gibi okunmamalı; model kişisel ürünleri "
+                "önceliklendiren bir aday sıralama aracı olarak kullanılmalıdır."
+            )
 
     st.markdown("<br>",unsafe_allow_html=True)
     st.markdown('''<div class="sec-head" style="margin-top:4px">📊 Genel Ürün Modeli Grafikleri</div>''',

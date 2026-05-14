@@ -170,6 +170,26 @@ Her iki modelde de Random Forest kullandım. Karar ağaçları mantığıyla ça
 
 Kişisel modelde recall değerinin çok yüksek olması, test verisinde satın alma yapan müşteri-ürün çiftlerinin neredeyse hiç kaçırılmadığını gösterir. Precision daha düşük kaldığı için bu modeli kesin satış kararı gibi değil, müşteriye gösterilecek ürünleri önceliklendiren bir aday sıralama modeli olarak yorumladım. Bu nedenle dashboardda kişisel model çıktıları “öneri önceliği” olarak gösterildi. Özellikle sepete ekleme davranışı güçlü bir sinyal olduğu için gerçek bir iş ortamında model zaman bazlı test ve canlı A/B test ile tekrar doğrulanmalıdır.
 
+Kişisel modelde `add_to_cart` değişkeninin baskın olup olmadığını ayrıca kontrol ettim. Aynı train/test ayrımında Random Forest ve Lojistik Regresyon modelleri karşılaştırıldı; ayrıca `add_to_cart` alanı çıkarıldığında metriklerin nasıl değiştiği ölçüldü.
+
+| Kontrol | Sonuç |
+|---|---:|
+| Ana kişisel modelde `add_to_cart` özellik önemi | %80.5 |
+| Random Forest AUC, `add_to_cart` dahil | 0.955 |
+| Random Forest AUC, `add_to_cart` hariç | 0.752 |
+| AUC farkı | 0.202 |
+| Recall farkı | 0.146 |
+| Precision farkı | 0.300 |
+
+Bu kontrol bana şunu gösterdi: kişisel model satın alma sinyalini büyük ölçüde sepete ekleme davranışından öğreniyor. Bu beklenen bir durumdur; çünkü e-ticarette sepete ekleme satın alma niyetinin en güçlü göstergelerinden biridir. Yine de bu yüzden modeli “kesin satın alır / satın almaz” kararı olarak değil, önerilecek ürünleri sıralayan destekleyici bir model olarak kullandım.
+
+Bu kontrolün çıktıları:
+
+```text
+outputs/kisisel_model_karsilastirma.csv
+outputs/kisisel_add_to_cart_kontrol.csv
+```
+
 ## Görsel Çıktılar
 
 Pipeline çalıştırıldığında dashboard ve sunumda kullanılan görseller `outputs/charts/` klasöründe yeniden üretilir. Bu görseller, proje adımlarını hızlıca kontrol etmek ve raporu görsel olarak desteklemek için kullanılır.
