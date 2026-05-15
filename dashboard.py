@@ -1718,21 +1718,49 @@ elif sayfa == "Duygu":
     st.plotly_chart(fig,use_container_width=True)
     st.caption("📌 4 ve 5 yıldızlı yorumların baskın olması müşteri memnuniyetinin yüksek olduğunu destekliyor. Düşük yıldızlı yorumlar ise iyileştirme yapılabilecek ürünleri yakalamak için kullanılır.")
 
-    st.markdown('''<div class="sec-head" style="margin-top:8px">💬 Örnek Yorumlar</div>''',
+    st.markdown('''<div class="sec-head" style="margin-top:8px">💬 Benzersiz Yorum Örnekleri</div>''',
                 unsafe_allow_html=True)
     sec=st.selectbox("Duygu türü",["positive","negative","neutral"],
         format_func=lambda x:{"positive":"😊 Pozitif","negative":"😠 Negatif","neutral":"😐 Nötr"}[x])
-    for _,r in duygu_df[duygu_df["duygu"]==sec].head(6).iterrows():
+
+    sec_df = duygu_df[duygu_df["duygu"] == sec].copy()
+    toplam_sec = len(sec_df)
+    benzersiz_sec = sec_df["review_text"].nunique() if "review_text" in sec_df.columns else 0
+
+    if toplam_sec and benzersiz_sec:
+        toplam_sec_yaz = f"{toplam_sec:,}".replace(",", ".")
+        benzersiz_sec_yaz = f"{benzersiz_sec:,}".replace(",", ".")
+        tekrar_ozet = (sec_df.groupby("review_text", as_index=False)
+            .agg(
+                tekrar=("review_id", "count"),
+                ort_guven=("guven", "mean"),
+                ort_vader=("compound", "mean"),
+                ort_rating=("rating", "mean"),
+            )
+            .sort_values(["tekrar", "ort_rating"], ascending=[False, False]))
+
+        st.caption(
+            f"Bu duygu türünde {toplam_sec_yaz} yorum satırı var; "
+            f"bunlar {benzersiz_sec_yaz} benzersiz yorum metninden oluşuyor. "
+            "Tekrarlı metinler silinmedi, fakat örnek bölümünde tekilleştirilerek gösteriliyor."
+        )
+
         c=DUYGU_RENK[sec]
-        st.markdown(f'''
-        <div class="yorum-card" style="border-left:3px solid {c}">
-          <div class="yorum-text">{str(r["review_text"])[:220]}</div>
-          <div class="yorum-meta">
-            Güven: <span style="color:{c};font-weight:700">{r["guven"]:.1%}</span>
-            &nbsp;·&nbsp; VADER: {r["compound"]:.3f}
-            &nbsp;·&nbsp; Rating: {r["rating"]}★
-          </div>
-        </div>''', unsafe_allow_html=True)
+        for _,r in tekrar_ozet.head(6).iterrows():
+            tekrar_yaz = f"{int(r['tekrar']):,}".replace(",", ".")
+            st.markdown(f'''
+            <div class="yorum-card" style="border-left:3px solid {c}">
+              <div class="yorum-text">{str(r["review_text"])[:220]}</div>
+              <div class="yorum-meta">
+                Tekrar: <span style="color:{c};font-weight:700">{tekrar_yaz} satır</span>
+                &nbsp;·&nbsp; Ortalama güven: {r["ort_guven"]:.1%}
+                &nbsp;·&nbsp; Ortalama VADER: {r["ort_vader"]:.3f}
+                &nbsp;·&nbsp; Ortalama rating: {r["ort_rating"]:.1f}★
+              </div>
+            </div>''', unsafe_allow_html=True)
+    else:
+        st.info("Bu duygu türü için gösterilecek yorum bulunamadı.")
+
 
 # =========================================================================
 # SAYFA 7 — MÜŞTERİ

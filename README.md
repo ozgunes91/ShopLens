@@ -114,6 +114,8 @@ Bu yaklaşım modelin hatalı veya uydurma sinyaller öğrenmesini engelledi.
 
 Duygu analizi için VADER kullandım. Ancak yalnızca metin skoruna göre karar vermedim; yorumdaki rating bilgisini de dahil ettim. Bunun nedeni, veri setindeki yorumların kısa ve tekrarlı olmasıdır.
 
+Dashboard'da örnek yorumlar satır satır tekrar basılmadı. Aynı yorum metinleri tekilleştirilerek kaç kez geçtiği, ortalama rating, VADER ve güven değeriyle birlikte gösterildi. Böylece tekrar eden metinler saklanmadı; ama ekranda yanıltıcı biçimde çoğaltılmış gibi de sunulmadı.
+
 Kullandığım temel karar mantığı:
 
 ```python
