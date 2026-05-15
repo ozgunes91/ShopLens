@@ -12,10 +12,19 @@ import plotly.graph_objects as go
 import streamlit as st
 import streamlit.components.v1 as components
 from pathlib import Path
+from datetime import datetime
 from sklearn.preprocessing import MinMaxScaler
 from joblib import load
 
 warnings.filterwarnings("ignore")
+
+
+def dosya_zamani(path):
+    """Bir output dosyasının son güncelleme zamanını okunur biçimde döndürür."""
+    try:
+        return datetime.fromtimestamp(Path(path).stat().st_mtime).strftime("%d.%m.%Y %H:%M")
+    except Exception:
+        return "bilinmiyor"
 
 # =============================================================================
 # SAYFA AYARI
@@ -1058,8 +1067,20 @@ elif sayfa == "EDA":
     with b2:
         try:
             events_tmp = pd.read_csv("data/events.csv", parse_dates=["timestamp"])
-            events_tmp["ay"] = events_tmp["timestamp"].dt.to_period("M").astype(str)
-            aylik = events_tmp.groupby("ay").size().reset_index(name="n").tail(18)
+            events_tmp["ay_period"] = events_tmp["timestamp"].dt.to_period("M")
+            aylik = (
+                events_tmp.groupby("ay_period")
+                .size()
+                .reset_index(name="n")
+                .sort_values("ay_period")
+            )
+            son_ay = events_tmp["timestamp"].max().to_period("M")
+            tamamlanan_aylar = aylik[aylik["ay_period"] < son_ay].copy()
+            son_ay_cikarildi = len(tamamlanan_aylar) >= 6
+            if son_ay_cikarildi:
+                aylik = tamamlanan_aylar
+            aylik = aylik.tail(18).copy()
+            aylik["ay"] = aylik["ay_period"].astype(str)
             if aylik.empty:
                 st.info("Aylık trend grafiği için yeterli tarih bilgisi bulunamadı.")
             else:
@@ -1067,11 +1088,14 @@ elif sayfa == "EDA":
                     mode="lines+markers", line=dict(color=TURUNCU, width=2.5),
                     marker=dict(size=5, color=TURUNCU),
                     fill="tozeroy", fillcolor="rgba(249,115,22,0.07)"))
-                tema(fig, h=300, baslik="Aylık Etkileşim Trendi (Son 18 Ay)",
+                tema(fig, h=300, baslik="Aylık Etkileşim Trendi (Son 18 Tam Ay)",
                      xaxis=dict(**EKSEN, title="", tickangle=-30),
                      yaxis=dict(**EKSEN, title="Etkileşim Sayısı"))
                 st.plotly_chart(fig, use_container_width=True)
-                st.caption("📌 Son 18 aylık hareket, trafik hacminin dönemsel olarak nasıl değiştiğini gösterir. Bu grafik kampanya, sezon ve veri kesim dönemi etkisini okumak için kullanılır.")
+                not_metni = "📌 Grafik tamamlanan ayları gösterir; kampanya ve sezon etkisini okumak için kullanılır."
+                if son_ay_cikarildi:
+                    not_metni += " Veri setindeki tamamlanmamış son ay grafiğe alınmadı; bu yüzden yapay düşüş oluşmaz."
+                st.caption(not_metni)
         except Exception as hata:
             st.warning(f"Aylık trend grafiği oluşturulamadı: {hata}")
 
@@ -1273,9 +1297,10 @@ elif sayfa == "Model":
       Genel ürün modelinde <strong>satış oranı</strong> modele verilmedi; çünkü önerilir / önerilmez etiketi
       satış oranını da dikkate alan ağırlıklı <strong>öneri skoru</strong> üzerinden oluşturuldu.
       Bu alanı tekrar modele vermek, cevabın bir kısmını modele göstermek olurdu.
-      Kişiye özel modelde ise <strong>satın aldı</strong>, sipariş sonucu ve satış adedi gibi hedefi doğrudan
-      gösteren alanlar modele verilmedi. Bu model kesin satış kararı vermek için değil, ürünleri
-      müşteri bazında önceliklendirmek için kullanıldı.
+	      Kişiye özel modelde ise <strong>satın aldı</strong>, sipariş sonucu ve satış adedi gibi hedefi doğrudan
+	      gösteren alanlar modele verilmedi. Ayrıca genel ürün performansını çok doğrudan özetleyen
+	      <strong>öneri skoru</strong> ve ürün bazlı <strong>sepet oranı</strong> da eğitim değişkenlerinden çıkarıldı.
+	      Bu model kesin satış kararı vermek için değil, ürünleri müşteri bazında önceliklendirmek için kullanıldı.
     </div>
     """, unsafe_allow_html=True)
 
@@ -1349,6 +1374,13 @@ elif sayfa == "Model":
       </div>
     </div>
     """, unsafe_allow_html=True)
+
+    genel_cikti_zamani = dosya_zamani("outputs/model_met.csv")
+    kisisel_cikti_zamani = dosya_zamani("outputs/kisisel_model_met.csv")
+    st.caption(
+        f"📌 Bu bölümdeki model metrikleri sabit yazılmadı; pipeline çıktılarından okunur. "
+        f"Genel ürün modeli: {genel_cikti_zamani}, kişiye özel model: {kisisel_cikti_zamani}."
+    )
 
     st.markdown("<br>",unsafe_allow_html=True)
     st.markdown('''<div class="sec-head" style="margin-top:4px">🧭 İki Modelin Rolü</div>''',
@@ -1466,7 +1498,11 @@ elif sayfa == "Model":
              xaxis=dict(**EKSEN,title="Tahmin"),
              yaxis=dict(**EKSEN,title="Gerçek",autorange="reversed"))
         st.plotly_chart(fig, use_container_width=True)
-        st.caption("📌 Confusion Matrix modelin doğru ve yanlış kararlarını gösterir. Bu testte model 185 ürünü doğru şekilde önerilmez, 69 ürünü doğru şekilde önerilir olarak sınıflandırmıştır; 25 yanlış pozitif ve 21 yanlış negatif karar vardır.")
+        st.caption(
+            f"📌 Confusion Matrix modelin doğru ve yanlış kararlarını gösterir. Bu testte model "
+            f"{sayi_yaz(tn)} ürünü doğru şekilde önerilmez, {sayi_yaz(tp)} ürünü doğru şekilde önerilir "
+            f"olarak sınıflandırmıştır; {sayi_yaz(fp)} yanlış pozitif ve {sayi_yaz(fn)} yanlış negatif karar vardır."
+        )
     with c2:
         fig = go.Figure()
         fig.add_trace(go.Scatter(x=fpr,y=tpr,mode="lines",
@@ -1483,7 +1519,10 @@ elif sayfa == "Model":
                          bordercolor="#E2E8F0",borderwidth=1,
                          font=dict(color="#334155",size=10)))
         st.plotly_chart(fig, use_container_width=True)
-        st.caption("📌 ROC eğrisi modelin önerilir ve önerilmez sınıflarını ayırma gücünü gösterir. AUC değerinin 0.913 olması, modelin rastgele tahminden çok daha güçlü bir ayrım yaptığını gösterir.")
+        st.caption(
+            f"📌 ROC eğrisi modelin önerilir ve önerilmez sınıflarını ayırma gücünü gösterir. "
+            f"AUC değerinin {auc_val:.3f} olması, modelin rastgele tahminden daha güçlü bir ayrım yaptığını gösterir."
+        )
 
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown('''<div class="sec-head" style="margin-top:8px">👤 Kişiye Özel Öneri Sıralama Modeli Grafikleri</div>''',
@@ -1553,7 +1592,7 @@ elif sayfa == "Model":
         veri["ad"] = veri["ozellik"].map(OZELLIK_AD).fillna(veri["ozellik"])
         veri_s = veri.sort_values("onem")
         renkler = [ana_renk if i == len(veri_s) - 1 else MAVI for i in range(len(veri_s))]
-        ust_sinir = max(float(veri_s["onem"].max()) * 1.18, 0.05)
+        ust_sinir = max(float(veri_s["onem"].max()) * 1.30, 0.05)
 
         fig = go.Figure(go.Bar(
             y=veri_s["ad"],
@@ -1572,7 +1611,7 @@ elif sayfa == "Model":
             xaxis=dict(**EKSEN, title="Göreceli Önem", range=[0, ust_sinir]),
             yaxis=dict(**EKSEN),
         )
-        fig.update_layout(margin=dict(l=10, r=80, t=45, b=18))
+        fig.update_layout(margin=dict(l=20, r=125, t=45, b=24))
         return fig, veri.sort_values("onem", ascending=False).reset_index(drop=True)
 
     of1, of2 = st.columns(2)
@@ -1606,10 +1645,21 @@ elif sayfa == "Duygu":
     st.markdown('''<div class="sec-head">💬 Yorum Duygusu ve Rating Analizi <span class="sec-tag">VADER + Rating Hibrit</span></div>''',
                 unsafe_allow_html=True)
 
-    st.markdown("""
+    try:
+        yorum_ozet = pd.read_csv("outputs/duygu_metin_ozeti.csv").iloc[0]
+        toplam_yorum_ozet = int(yorum_ozet.get("toplam_yorum", len(duygu_df)))
+        benzersiz_yorum = int(yorum_ozet.get("benzersiz_yorum_metni", 0))
+    except Exception:
+        toplam_yorum_ozet = len(duygu_df)
+        benzersiz_yorum = int(duygu_df["review_text"].nunique()) if "review_text" in duygu_df.columns else 0
+
+    toplam_yorum_yaz = f"{toplam_yorum_ozet:,}".replace(",", ".")
+    benzersiz_yorum_yaz = f"{benzersiz_yorum:,}".replace(",", ".")
+    st.markdown(f"""
     <div class="info-box">
-      <strong>Yöntem: VADER + Rating Hibrit</strong> — VADER sözlük tabanlı duygu analizi yapar.
-      Ancak bu veri setinde "Okay overall" (compound=0.226) VADER'ı pozitif sayar, rating=3 olduğundan aslında nötrdür.
+      <strong>Yöntem: VADER + Rating Hibrit</strong> — yorum metninin duygu skoru rating bilgisiyle birlikte yorumlandı.
+      Bu veri setinde {toplam_yorum_yaz} yorum satırı içinde {benzersiz_yorum_yaz} benzersiz yorum metni bulunduğu için
+      yalnızca metin skoruna güvenmek yerine rating desteği kullanıldı.
       Hibrit kural: <em>compound &gt; 0.3 VE rating ≥ 4 → pozitif, compound &lt; -0.1 VEYA rating ≤ 2 → negatif, diğerleri → nötr</em>
     </div>
     """, unsafe_allow_html=True)

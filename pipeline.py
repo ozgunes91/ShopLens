@@ -326,9 +326,15 @@ def keşifsel_veri_analizi(events, ev_temiz, products, reviews, orders,
     ax.spines[["top", "right"]].set_visible(False)
 
     # ── 6. Aylık sipariş trendi
+    # Son ay tamamlanmamışsa grafiğe alınmaz; aksi halde trend grafiği
+    # gerçek olmayan sert bir düşüş varmış gibi yorumlanabilir.
     ax = axes[1, 2]
     orders["ay"] = pd.to_datetime(orders["order_time"]).dt.to_period("M")
-    aylik = orders.groupby("ay").size().reset_index(name="siparis")
+    aylik = orders.groupby("ay").size().reset_index(name="siparis").sort_values("ay")
+    son_ay = pd.to_datetime(orders["order_time"]).max().to_period("M")
+    tamamlanan_aylar = aylik[aylik["ay"] < son_ay].copy()
+    if len(tamamlanan_aylar) >= 3:
+        aylik = tamamlanan_aylar
     aylik["ay_str"] = aylik["ay"].astype(str)
     son_12 = aylik.tail(12)
     ax.plot(range(len(son_12)), son_12["siparis"].values,
@@ -337,7 +343,7 @@ def keşifsel_veri_analizi(events, ev_temiz, products, reviews, orders,
                     alpha=0.15, color=TURUNCU)
     ax.set_xticks(range(0, len(son_12), 3))
     ax.set_xticklabels(son_12["ay_str"].values[::3], rotation=30, fontsize=8)
-    ax.set_title("Aylık Sipariş Trendi (Son 12 Ay)", fontsize=12, fontweight="bold")
+    ax.set_title("Aylık Sipariş Trendi (Son 12 Tam Ay)", fontsize=12, fontweight="bold")
     ax.set_ylabel("Sipariş Sayısı")
     ax.spines[["top", "right"]].set_visible(False)
 
@@ -524,10 +530,10 @@ def duygu_analizi(reviews):
       - Compound skoru: -1 (çok negatif) ↔ +1 (çok pozitif)
 
     Neden sadece VADER yeterli değil?
-      Bu veri setinde 5 farklı yorum metni var, tekrarlı kullanılmış.
-      "Okay overall" → compound=0.226 → VADER bu yorumu pozitif sayar.
-      Ama bu metnin rating'i 3 → gerçekte nötr olmalı.
-      Gerçek rating bilgisi ile hibrit karar daha doğru sonuç verir.
+      Bu veri setinde yorum metinleri kısa ve tekrarlı.
+      Bazı nötr yorumlar metin skoru açısından pozitif görünebilir.
+      Bu yüzden rating=3 gibi orta puanlı yorumlar nötr kabul edilerek
+      metin skoru rating bilgisiyle birlikte yorumlandı.
 
     Hibrit Karar Kuralı:
       compound > 0.3  VE rating ≥ 4 → pozitif

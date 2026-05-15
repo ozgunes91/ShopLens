@@ -1,5 +1,5 @@
 model,senaryo,add_to_cart_dahil,auc,dogruluk,precision,recall,f1,tn,fp,fn,tp,aciklama
-Random Forest,Davranış sinyalleri dahil,True,0.9545546958804705,0.8825142183853353,0.48657751362060425,0.9995929995929996,0.6545406089679525,102108,15549,6,14736,Ana kişisel öneri modeli. Sepete ekleme sinyalini de kullanır.
-Random Forest,add_to_cart hariç kontrol,False,0.7522471295111257,0.5685239314496333,0.18625549617303508,0.8534120200786868,0.30577598463950223,62691,54966,2161,12581,Sepete ekleme etkisini görmek için add_to_cart alanı çıkarılmıştır.
-Lojistik Regresyon,Davranış sinyalleri dahil,True,0.9495003300358413,0.8729446597028678,0.46695475343162174,0.9968796635463302,0.6359977495996884,100881,16776,46,14696,Karşılaştırma için daha basit ve okunabilir bir doğrusal model.
-Lojistik Regresyon,add_to_cart hariç kontrol,False,0.7305046132230235,0.6251029086322404,0.1895330628514485,0.7224935558268891,0.30029039442893796,72112,45545,4091,10651,Basit modelde add_to_cart çıkarıldığında performansın nasıl değiştiğini gösterir.
+Random Forest,Davranış sinyalleri dahil,True,0.9539472745444341,0.8816985022545487,0.4848524719581593,0.9998643331976665,0.6530359081142149,101996,15661,2,14740,Ana kişisel öneri modeli. Sepete ekleme sinyalini de kullanır.
+Random Forest,add_to_cart hariç kontrol,False,0.7524787969180001,0.5649362910596002,0.18548197722202653,0.8572785239451907,0.304978401988465,62159,55498,2104,12638,Sepete ekleme etkisini görmek için add_to_cart alanı çıkarılmıştır.
+Lojistik Regresyon,Davranış sinyalleri dahil,True,0.9490056132584839,0.8726803072530759,0.46644242058832863,0.9970831637498304,0.635563722840774,100843,16814,43,14699,Karşılaştırma için daha basit ve okunabilir bir doğrusal model.
+Lojistik Regresyon,add_to_cart hariç kontrol,False,0.7269194429641038,0.6219986555789696,0.18741699573247392,0.717948717948718,0.29724074984202764,71768,45889,4158,10584,Basit modelde add_to_cart çıkarıldığında performansın nasıl değiştiğini gösterir.

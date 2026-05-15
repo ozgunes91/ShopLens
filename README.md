@@ -81,7 +81,7 @@ Bütün tabloları tek seferde büyük bir tabloya çevirmedim. Çünkü her tab
 2. **Kişisel model tablosu:** `outputs/kisisel_model_verisi.csv`  
    Her satır bir müşteri-ürün eşleşmesini temsil eder. Modelin sorusu şudur: “Bu müşteri için hangi ürünler daha öncelikli önerilmeli?”
 
-Ürün bazlı tabloda hesaplanan `oneri_skoru`, `pozitif_oran`, `sepet_orani`, `ort_rating` gibi ürün sinyalleri daha sonra `product_id` üzerinden kişisel model tablosuna eklendi.
+Ürün bazlı tabloda hesaplanan ürün sinyalleri `product_id` üzerinden kişisel model tablosuna eklendi. Ancak hedef değişkenden doğrudan türeyen `oneri_skoru` ve ürün bazlı `satis_orani` kişisel modelde özellik olarak kullanılmadı; böylece modelin cevabı ezberlemesi engellendi.
 
 ## Eksik Verilerle Nasıl Baş Ettim?
 
@@ -166,7 +166,7 @@ Her iki modelde de Random Forest kullandım. Karar ağaçları mantığıyla ça
 | Model | AUC | Doğruluk | Precision | Recall | F1 |
 |---|---:|---:|---:|---:|---:|
 | Genel ürün modeli | 0.913 | %84.7 | %73.4 | %76.7 | 0.750 |
-| Kişiye özel öneri sıralama modeli | 0.955 | %88.3 | %48.7 | %99.96 | 0.655 |
+| Kişiye özel öneri sıralama modeli | 0.954 | %88.2 | %48.5 | %99.99 | 0.653 |
 
 Kişisel modelde recall değerinin çok yüksek olması, test verisinde satın alma yapan müşteri-ürün çiftlerinin neredeyse hiç kaçırılmadığını gösterir. Precision daha düşük kaldığı için bu modeli kesin satış kararı gibi değil, müşteriye gösterilecek ürünleri önceliklendiren bir aday sıralama modeli olarak yorumladım. Bu nedenle dashboardda kişisel model çıktıları “öneri önceliği” olarak gösterildi. Özellikle sepete ekleme davranışı güçlü bir sinyal olduğu için gerçek bir iş ortamında model zaman bazlı test ve canlı A/B test ile tekrar doğrulanmalıdır.
 
@@ -174,11 +174,11 @@ Kişisel modelde `add_to_cart` değişkeninin baskın olup olmadığını ayrıc
 
 | Kontrol | Sonuç |
 |---|---:|
-| Ana kişisel modelde `add_to_cart` özellik önemi | %80.5 |
-| Random Forest AUC, `add_to_cart` dahil | 0.955 |
+| Ana kişisel modelde `add_to_cart` özellik önemi | %80.8 |
+| Random Forest AUC, `add_to_cart` dahil | 0.954 |
 | Random Forest AUC, `add_to_cart` hariç | 0.752 |
 | AUC farkı | 0.202 |
-| Recall farkı | 0.146 |
+| Recall farkı | 0.143 |
 | Precision farkı | 0.300 |
 
 Bu kontrol bana şunu gösterdi: kişisel model satın alma sinyalini büyük ölçüde sepete ekleme davranışından öğreniyor. Bu beklenen bir durumdur; çünkü e-ticarette sepete ekleme satın alma niyetinin en güçlü göstergelerinden biridir. Yine de bu yüzden modeli “kesin satın alır / satın almaz” kararı olarak değil, önerilecek ürünleri sıralayan destekleyici bir model olarak kullandım.
