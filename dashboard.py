@@ -26,6 +26,22 @@ def dosya_zamani(path):
     except Exception:
         return "bilinmiyor"
 
+
+def fmt_int(value):
+    """Türkçe gösterim için binlik ayıracı nokta olan tam sayı metni üretir."""
+    try:
+        return f"{int(round(float(value))):,}".replace(",", ".")
+    except Exception:
+        return "0"
+
+
+def fmt_money(value):
+    """USD değerlerini Türkçe binlik ayıracıyla gösterir."""
+    try:
+        return "$" + f"{int(round(float(value))):,}".replace(",", ".")
+    except Exception:
+        return "$0"
+
 # =============================================================================
 # SAYFA AYARI
 # =============================================================================
@@ -75,6 +91,12 @@ button[aria-label="Close sidebar"],
 button[aria-label="Open sidebar"] {
   display: none !important;
 }
+/* Türkçe karakterler için otomatik büyük harf dönüşümü kapatıldı. */
+.chip, .bstat-lbl, .nav-title, .kpi-label, .sec-tag, .mini-label, .model-pill, .pill-label,
+.summary-label, .metric-label, .card-label {
+  text-transform: none !important;
+}
+
 header[data-testid="stHeader"] {
   background: transparent !important;
   height: 2.25rem !important;
@@ -154,7 +176,7 @@ header[data-testid="stHeader"] {
 }
 .bstat-lbl {
   font-size: 0.58rem; color: rgba(255,255,255,0.4);
-  font-weight: 500; text-transform: uppercase;
+  font-weight: 500; text-transform: none;
   letter-spacing: 0.08em; margin-top: 3px; display: block;
 }
 .bstat-div {
@@ -171,7 +193,7 @@ header[data-testid="stHeader"] {
 }
 .nav-title {
   font-size: 0.55rem; font-weight: 700; color: #94A3B8;
-  text-transform: uppercase; letter-spacing: 0.1em;
+  text-transform: none; letter-spacing: 0.1em;
   padding: 0 8px; margin-bottom: 8px;
 }
 .nav-item {
@@ -215,7 +237,7 @@ header[data-testid="stHeader"] {
 .kpi.navy::before   { background: linear-gradient(90deg,#1E3A5F,#3B82F6); }
 
 .kpi-label {
-  font-size: 0.63rem; font-weight: 700; text-transform: uppercase;
+  font-size: 0.63rem; font-weight: 700; text-transform: none;
   letter-spacing: 0.09em; color: #94A3B8; margin-bottom: 9px;
 }
 .kpi-num {
@@ -268,7 +290,7 @@ header[data-testid="stHeader"] {
   font-size: 0.58rem;
   font-weight: 800;
   letter-spacing: 0.07em;
-  text-transform: uppercase;
+  text-transform: none;
   color: #C2410C;
   background: #FFF7ED;
   border: 1px solid #FED7AA;
@@ -296,7 +318,7 @@ header[data-testid="stHeader"] {
   font-size: 0.56rem;
   color: #94A3B8;
   font-weight: 800;
-  text-transform: uppercase;
+  text-transform: none;
   letter-spacing: 0.07em;
 }
 .mini-value {
@@ -363,7 +385,7 @@ header[data-testid="stHeader"] {
 }
 .sec-tag {
   display: inline-block; font-size: 0.58rem; font-weight: 700;
-  letter-spacing: 0.08em; text-transform: uppercase;
+  letter-spacing: 0.08em; text-transform: none;
   background: #FFF7ED; border: 1px solid #FED7AA;
   color: #EA580C; padding: 2px 8px; border-radius: 4px;
 }
@@ -498,7 +520,7 @@ header[data-testid="stHeader"] {
   margin-bottom: 9px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.03);
 }
-.pill-label { font-size: 0.6rem; color: #94A3B8; text-transform: uppercase;
+.pill-label { font-size: 0.6rem; color: #94A3B8; text-transform: none;
               letter-spacing: 0.06em; margin-bottom: 3px; }
 .pill-val   { font-size: 1.05rem; font-weight: 700; line-height: 1.2; }
 .pill-sub   { font-size: 0.68rem; color: #94A3B8; margin-top: 4px; }
@@ -855,12 +877,12 @@ with st.sidebar:
       <div style="font-size:1.05rem;font-weight:800;color:#1E3A5F;letter-spacing:-0.02em">
         🛒 ShopLens
       </div>
-      <div style="font-size:0.58rem;color:#94A3B8;text-transform:uppercase;
+      <div style="font-size:0.58rem;color:#94A3B8;text-transform:none;
                   letter-spacing:0.1em;margin-top:3px">E-Ticaret Analiz Platformu</div>
     </div>
     <hr style="border-color:#F1F5F9;margin:0 0 14px">
     <div style="font-size:0.58rem;font-weight:700;color:#94A3B8;
-                text-transform:uppercase;letter-spacing:0.1em;
+                text-transform:none;letter-spacing:0.1em;
                 margin-bottom:10px">Navigasyon</div>
     """, unsafe_allow_html=True)
     for icon, etiket, hedef in SAYFALAR:
@@ -895,8 +917,8 @@ if sayfa == "Özet":
 
     k1,k2,k3,k4,k5 = st.columns(5)
     for kol, lbl, val, sub, cls in [
-        (k1,"Toplam Ürün",f"{len(urun_df):,}",f"↗ {rec_n} önerilir","orange"),
-        (k2,"Yorum Analizi",f"{len(duygu_df):,}",f"↗ {pos_n:,} pozitif","blue"),
+        (k1,"Toplam Ürün",fmt_int(len(urun_df)),f"↗ {rec_n} önerilir","orange"),
+        (k2,"Yorum Analizi",fmt_int(len(duygu_df)),f"↗ {fmt_int(pos_n)} pozitif","blue"),
         (k3,"Ort. Skor",f"{ort_sk:.3f}",f"Maks: {urun_df['oneri_skoru'].max():.3f}","green"),
         (k4,"Ort. Rating",f"{ort_rt:.2f}","/5 puan","amber"),
         (k5,"Genel Dönüşüm",f"{genel_donusum:.1%}","purchase/page_view","navy"),
@@ -921,7 +943,7 @@ if sayfa == "Özet":
             fig.add_trace(go.Bar(
                 y=[isim], x=[satir["event_sayisi"]], orientation="h",
                 marker_color=rk_h[i], showlegend=False,
-                text=f"  {satir['event_sayisi']:,}",
+                text=f"  {fmt_int(satir['event_sayisi'])}",
                 textposition="outside", textfont=dict(color="#334155",size=11),
             ))
         tema(fig, h=225, bargap=0.38,
@@ -1046,7 +1068,7 @@ elif sayfa == "EDA":
         fig = px.bar(x=ev_say.index, y=ev_say.values,
                      color=ev_say.values,
                      color_continuous_scale=[[0,MAVI],[1,LACIVERT]],
-                     text=[f"{v:,}" for v in ev_say.values],
+                     text=[fmt_int(v) for v in ev_say.values],
                      labels={"x":"Event Tipi","y":"Sayı"})
         fig.update_traces(textposition="outside", textfont=dict(color="#334155", size=11))
         fig.update_coloraxes(showscale=False)
@@ -1060,7 +1082,7 @@ elif sayfa == "EDA":
         cart = int(ev_say.get("add_to_cart", 0))
         cart_ratio = (cart / pv) if pv else 0
         st.caption(
-            f"📌 Sayfa görüntüleme ({pv:,}) açık ara en sık eylem. "
+            f"📌 Sayfa görüntüleme ({fmt_int(pv)}) açık ara en sık eylem. "
             f"Sepete ekleme oranı %{cart_ratio * 100:.1f}; kullanıcıların önemli bir kısmı "
             "ürünü görüyor ancak sepete ekleme adımına geçmiyor. Asıl darboğaz burada."
         )
@@ -1119,7 +1141,7 @@ elif sayfa == "EDA":
         fig = go.Figure(go.Bar(
             x=rat_say.index, y=rat_say.values,
             marker_color=clrs[:len(rat_say)],
-            text=[f"{v:,}" for v in rat_say.values],
+            text=[fmt_int(v) for v in rat_say.values],
             textposition="outside",
             textfont=dict(color="#334155", size=11),
         ))
@@ -1374,13 +1396,6 @@ elif sayfa == "Model":
       </div>
     </div>
     """, unsafe_allow_html=True)
-
-    genel_cikti_zamani = dosya_zamani("outputs/model_met.csv")
-    kisisel_cikti_zamani = dosya_zamani("outputs/kisisel_model_met.csv")
-    st.caption(
-        f"📌 Bu bölümdeki model metrikleri sabit yazılmadı; pipeline çıktılarından okunur. "
-        f"Genel ürün modeli: {genel_cikti_zamani}, kişiye özel model: {kisisel_cikti_zamani}."
-    )
 
     st.markdown("<br>",unsafe_allow_html=True)
     st.markdown('''<div class="sec-head" style="margin-top:4px">🧭 İki Modelin Rolü</div>''',
@@ -1669,9 +1684,9 @@ elif sayfa == "Duygu":
 
     d1,d2,d3 = st.columns(3)
     for kol,l,v,s,cls in [
-        (d1,"😊 Pozitif",f"{pos:,}",f"↗ %{pos/toplam*100:.1f}","green"),
-        (d2,"😐 Nötr",f"{not_:,}",f"%{not_/toplam*100:.1f}","blue"),
-        (d3,"😠 Negatif",f"{neg:,}",f"↘ %{neg/toplam*100:.1f}","red"),
+        (d1,"😊 Pozitif",fmt_int(pos),f"↗ %{pos/toplam*100:.1f}","green"),
+        (d2,"😐 Nötr",fmt_int(not_),f"%{not_/toplam*100:.1f}","blue"),
+        (d3,"😠 Negatif",fmt_int(neg),f"↘ %{neg/toplam*100:.1f}","red"),
     ]:
         kol.markdown(f'''
         <div class="kpi {cls}">
@@ -1709,7 +1724,7 @@ elif sayfa == "Duygu":
     fig=px.bar(x=yildiz.index,y=yildiz.values,
         color=yildiz.values.tolist(),
         color_continuous_scale=[[0,KIRMIZI],[0.5,SARI],[1,YESIL]],
-        text=[f"{v:,}" for v in yildiz.values],labels={"x":"Yıldız","y":"Yorum"})
+        text=[fmt_int(v) for v in yildiz.values],labels={"x":"Yıldız","y":"Yorum"})
     fig.update_traces(textposition="outside",textfont=dict(color="#334155",size=12))
     fig.update_coloraxes(showscale=False)
     tema(fig,h=240,xaxis=dict(**EKSEN,tickvals=[1,2,3,4,5],
@@ -1780,10 +1795,10 @@ elif sayfa == "Müşteri":
     sc=rfm_df["segment"].value_counts()
     m1,m2,m3,m4=st.columns(4)
     for kol,l,v,s,cls in [
-        (m1,"🏆 Şampiyon",f"{int(sc.get('Şampiyon',0)):,}","En değerliler","orange"),
-        (m2,"💚 Sadık",f"{int(sc.get('Sadık',0)):,}","Düzenli alışveriş","green"),
-        (m3,"⚠ Risk",f"{int(sc.get('Risk Altında',0)):,}","Geri kazan","amber"),
-        (m4,"💔 Kayıp",f"{int(sc.get('Kayıp',0)):,}","Uzun süre yok","red"),
+        (m1,"🏆 Şampiyon",fmt_int(sc.get('Şampiyon',0)),"En değerliler","orange"),
+        (m2,"💚 Sadık",fmt_int(sc.get('Sadık',0)),"Düzenli alışveriş","green"),
+        (m3,"⚠ Risk",fmt_int(sc.get('Risk Altında',0)),"Geri kazan","amber"),
+        (m4,"💔 Kayıp",fmt_int(sc.get('Kayıp',0)),"Uzun süre yok","red"),
     ]:
         kol.markdown(f'''
         <div class="kpi {cls}">
@@ -1797,7 +1812,7 @@ elif sayfa == "Müşteri":
     with r1:
         fig=go.Figure(go.Bar(x=sc.values,y=sc.index,orientation="h",
             marker_color=[SEG_RENK.get(s,"#999") for s in sc.index],
-            text=[f" {v:,}" for v in sc.values],
+            text=[f" {fmt_int(v)}" for v in sc.values],
             textposition="outside",textfont=dict(color="#334155",size=10)))
         tema(fig,h=290,baslik="RFM Segment Dağılımı",
              xaxis=dict(**EKSEN,title="Müşteri Sayısı",range=[0,5200]),
@@ -1827,8 +1842,8 @@ elif sayfa == "Müşteri":
                 Ort_Harcama=("monetary","mean"),
                 Toplam=("monetary","sum"))
            .round(1).reset_index().sort_values("Toplam",ascending=False))
-    seg_o["Ort_Harcama"]=seg_o["Ort_Harcama"].apply(lambda x:f"${x:,.0f}")
-    seg_o["Toplam"]=seg_o["Toplam"].apply(lambda x:f"${x:,.0f}")
+    seg_o["Ort_Harcama"]=seg_o["Ort_Harcama"].apply(lambda x: fmt_money(x))
+    seg_o["Toplam"]=seg_o["Toplam"].apply(lambda x: fmt_money(x))
     st.dataframe(seg_o,use_container_width=True,hide_index=True)
 
     st.markdown("<br>",unsafe_allow_html=True)
@@ -1981,7 +1996,7 @@ elif sayfa == "Müşteri":
               </div>
               <div class="pill" style="flex:1;border-left:3px solid #94A3B8">
                 <div class="pill-label">Harcama</div>
-                <div class="pill-val">${mon:,.0f}</div>
+                <div class="pill-val">{fmt_money(mon)}</div>
               </div>
             </div>''', unsafe_allow_html=True)
 
@@ -1995,7 +2010,7 @@ elif sayfa == "Müşteri":
                     st.stop()
                 pk2,ok2=st.columns([1,3])
                 with pk2:
-                    st.markdown('<p style="font-size:0.72rem;color:#94A3B8;font-weight:700;text-transform:uppercase">Geçmiş Kategori Satın Alımları</p>', unsafe_allow_html=True)
+                    st.markdown('<p style="font-size:0.72rem;color:#94A3B8;font-weight:700;text-transform:none">Geçmiş Kategori Satın Alımları</p>', unsafe_allow_html=True)
                     tot_a=tercih["quantity"].sum()
                     for _,tr in tercih.head(5).iterrows():
                         p2=tr["quantity"]/tot_a*100
@@ -2013,7 +2028,7 @@ elif sayfa == "Müşteri":
                     baslik = "Kişiye Özel Öneri Sıralaması"
                     if not kisisel_met_df.empty:
                         baslik += f" · AUC {float(kisisel_met_df['auc'].iloc[0]):.3f}"
-                    st.markdown(f'<p style="font-size:0.72rem;color:#94A3B8;font-weight:700;text-transform:uppercase">{baslik}</p>', unsafe_allow_html=True)
+                    st.markdown(f'<p style="font-size:0.72rem;color:#94A3B8;font-weight:700;text-transform:none">{baslik}</p>', unsafe_allow_html=True)
                     for sira,(_, u) in enumerate(oner.iterrows(),1):
                         ol = float(u.get("satin_alma_olasiligi",0))
                         sp=int(min(1, ol)*100)
@@ -2048,7 +2063,7 @@ elif sayfa == "Müşteri":
 
         st.markdown(f"""
         <div class="info-box">
-          Bu tabloda <strong>{len(liste_tum):,}</strong> müşteri var.
+          Bu tabloda <strong>{fmt_int(len(liste_tum))}</strong> müşteri var.
           Önce müşteriyi seçip arama alanına adını veya ID bilgisini yazabilirsin.
           İstersen görünen liste için toplu öneri çıktısı da oluşturabilirsin.
         </div>
@@ -2078,7 +2093,7 @@ elif sayfa == "Müşteri":
 
         mev=[c for c in ["customer_id","name","country","age","recency","frequency","monetary","segment"] if c in liste.columns]
         g=liste[mev].copy()
-        if "monetary" in g.columns: g["monetary"]=g["monetary"].apply(lambda x:f"${x:,.0f}")
+        if "monetary" in g.columns: g["monetary"]=g["monetary"].apply(lambda x: fmt_money(x))
         g.columns=[{"customer_id":"ID","name":"Ad","country":"Ülke","age":"Yaş",
                      "recency":"Recency","frequency":"Sipariş","monetary":"Harcama",
                      "segment":"Segment"}.get(c,c) for c in g.columns]
