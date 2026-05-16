@@ -1,122 +1,83 @@
 # ShopLens — E-Ticaret Davranış Analizi ve Akıllı Ürün Öneri Sistemi
 
 **Hazırlayan:** Özge Güneş  
-**Ders / Proje:** İSMEK Yapay Zekâ ve Veri Bilimi  
-**Konu:** E-ticaret davranış analizi, ürün öneri skoru, duygu analizi, müşteri segmentasyonu ve kişiye özel ürün öneri sıralaması
+**Ders:** İSMEK Yapay Zekâ ve Veri Bilimi  
+**Tarih:** Mayıs 2026
 
 ## Projenin Amacı
 
-Bu projede bir e-ticaret platformunda müşterilerin ürünlerle olan etkileşimlerini analiz ettim. Amacım yalnızca en çok satan ürünleri listelemek değildi. Ürün görüntüleme, sepete ekleme, sipariş, ürün bilgisi, müşteri bilgisi ve yorum verilerini bir araya getirerek belirli bir müşteri için ürünleri öneri önceliğine göre sıralayan bir sistem kurdum.
+Bu projede bir e-ticaret platformunda müşteri-ürün etkileşimlerini analiz ettim. Amacım sadece en çok satan ürünleri listelemek değil, ürün görüntüleme, sepete ekleme, sipariş, ürün bilgisi ve yorum verilerini birleştirerek belirli bir müşteri için ürünleri öneri önceliğine göre sıralayan bir sistem kurmaktı.
 
-Dashboard tarafında hem genel ürün performansını hem de seçilen müşteri için kişisel ürün önerilerini tek ekranda takip edilebilir hale getirdim.
+Dashboard tarafında hem genel ürün performansı hem de seçilen müşteri için kişisel ürün önerileri tek ekranda görünür.
 
-## Veri Seti Kaynağı
+## Canlı Dashboard
 
-Projede Kaggle üzerindeki **E-commerce Transactions + Clickstream** veri setini kullandım.
+https://shoplens.streamlit.app/
 
-Kaynak: https://www.kaggle.com/datasets/wafaaelhusseini/e-commerce-transactions-clickstream
+## Veri Seti
 
-Veri seti sentetik olarak üretilmiştir. Buna rağmen müşteri, ürün, oturum, clickstream eventleri, sipariş, sipariş kalemi ve yorum tablolarını birlikte içerdiği için e-ticaret analitiği projesi için uygundur.
+**Kaynak:** Kaggle — [E-commerce Transactions + Clickstream](https://www.kaggle.com/datasets/wafaaelhusseini/e-commerce-transactions-clickstream)
+
+Sentetik bir veri seti. Müşteri, ürün, oturum, clickstream eventleri, sipariş, sipariş kalemi ve yorum tablolarını birlikte içerdiği için e-ticaret analitiği için uygun.
+
+| Tablo | Satır | Kullanım |
+|---|---:|---|
+| events.csv | 760.958 | Sayfa görüntüleme, sepete ekleme, checkout, purchase |
+| sessions.csv | 120.000 | Eventleri müşteriye bağlamak |
+| customers.csv | 20.000 | Müşteri profili |
+| orders.csv | 33.580 | Sipariş başlığı |
+| order_items.csv | 59.163 | Ürün bazlı gerçek satış adedi ve gelir |
+| products.csv | 1.197 | Ürün bilgisi (fiyat, kategori, marj) |
+| reviews.csv | 10.780 | Rating ve yorum metinleri |
 
 ## Klasör Yapısı
 
 ```text
-data/                         Ham veri dosyaları
-outputs/                      Analiz çıktıları, skor tabloları ve model metrikleri
-outputs/charts/               Dashboard ve sunumda kullanılan grafikler
-models/                       Eğitilmiş model dosyaları
-pipeline.py                    Veri hazırlama, analiz ve modelleme pipeline'ı
-dashboard.py                  Streamlit dashboard
-ShopLens_Sunum_Final.pptx     Final proje sunumu
-requirements.txt              Gerekli Python kütüphaneleri
+data/                    Ham CSV dosyaları
+outputs/                 Analiz çıktıları (CSV, model metrikleri)
+outputs/charts/          Sunum ve dashboard grafikleri
+models/                  Eğitilmiş model dosyaları
+pipeline.py              Veri hazırlama, analiz ve modelleme
+dashboard.py             Streamlit dashboard
+requirements.txt         Bağımlılıklar
+ShopLens_Sunum_Final.pptx  Sunum
 ```
 
 ## Çalıştırma
 
-Gerekli kütüphaneleri yüklemek için:
-
 ```bash
 pip install -r requirements.txt
+python pipeline.py          # Tüm analizleri ve modelleri yeniden üretir
+streamlit run dashboard.py  # Dashboard'u açar (http://localhost:8501)
 ```
-
-Analizleri, skor tablolarını, grafikleri ve model dosyalarını yeniden üretmek için:
-
-```bash
-python pipeline.py
-```
-
-Dashboard'u açmak için:
-
-```bash
-streamlit run dashboard.py
-```
-
-Yerel dashboard adresi:
-
-```text
-http://localhost:8501
-```
-
-## Kullandığım Veri Tabloları
-
-Projede 7 ana tablo kullandım:
-
-| Tablo | Kullanım amacı |
-|---|---|
-| `events.csv` | Sayfa görüntüleme, sepete ekleme, checkout ve purchase eventleri |
-| `sessions.csv` | Eventleri müşteri ile eşleştirmek |
-| `customers.csv` | Müşteri profil bilgileri |
-| `products.csv` | Ürün adı, kategori, fiyat, maliyet ve marj bilgileri |
-| `orders.csv` | Sipariş başlığı, müşteri ve sipariş zamanı |
-| `order_items.csv` | Ürün bazlı gerçek satış adedi ve gelir |
-| `reviews.csv` | Rating ve yorum metinleri |
 
 ## Veri Birleştirme Mantığı
 
-Bütün tabloları tek seferde büyük bir tabloya çevirmedim. Çünkü her tablo farklı seviyede bilgi tutuyor. Bunun yerine iki ana analitik tablo oluşturdum:
+Bütün tabloları tek seferde birleştirmek yerine iki analitik tablo oluşturdum çünkü her tablo farklı seviyede bilgi tutuyor:
 
-1. **Ürün bazlı analitik tablo:** `outputs/urun_analitik.csv`  
-   Her satır bir ürünü temsil eder. Ürün görüntüleme, sepete ekleme, satış adedi, gelir, yorum sayısı ve rating gibi alanlar bu seviyede özetlenir.
+1. **Ürün bazlı tablo** — `outputs/urun_analitik.csv`  
+   Her satır bir ürün. Görüntüleme, sepete ekleme, satış adedi, gelir, yorum sayısı, rating ve duygu oranı bu seviyede.
 
-2. **Kişisel model tablosu:** `outputs/kisisel_model_verisi.csv`  
-   Her satır bir müşteri-ürün eşleşmesini temsil eder. Modelin sorusu şudur: “Bu müşteri için hangi ürünler daha öncelikli önerilmeli?”
+2. **Kişisel model tablosu** — `outputs/kisisel_model_verisi.csv`  
+   Her satır bir müşteri-ürün eşleşmesi. Modelin sorusu: "Bu müşteri için hangi ürünler daha öncelikli önerilmeli?"
 
-Ürün bazlı tabloda hesaplanan ürün sinyalleri `product_id` üzerinden kişisel model tablosuna eklendi. Ancak hedef değişkenden doğrudan türeyen `oneri_skoru` ve ürün bazlı `satis_orani` kişisel modelde özellik olarak kullanılmadı; böylece modelin cevabı ezberlemesi engellendi.
+Ürün sinyalleri `product_id` üzerinden kişisel model tablosuna eklendi. Ancak hedeften doğrudan türeyen `oneri_skoru` ve ürün bazlı `satis_orani`, kişisel modelde özellik olarak kullanılmadı (veri sızıntısı önlemi).
 
-## Eksik Verilerle Nasıl Baş Ettim?
+## Eksik Değerlerle Nasıl Baş Ettim?
 
-Eksik değerleri doğrudan silmedim. Önce eksikliğin veri yapısından mı, yoksa gerçekten eksik bilgiden mi kaynaklandığını kontrol ettim.
+Eksik değerleri doğrudan silmedim. Önce eksikliğin yapısal mı yoksa gerçek bilgi eksikliği mi olduğunu kontrol ettim.
 
-| Durum | Uygulanan işlem |
+| Durum | Karar |
 |---|---|
-| `events.product_id` checkout ve purchase satırlarında boş | Ürün bazlı satış için `events` değil, `order_items.quantity` kullanıldı |
-| Üründe yorum yok | Yorum sayısı ve duygu oranları uygun 0/nötr değerlerle dolduruldu |
-| Üründe görüntüleme veya sepete ekleme yok | İlgili event sayıları 0 kabul edildi |
-| `sepet_orani`, `satis_orani` ve kategori ilgisi gibi oranlarda payda 0 olabilir | Koşullu hesaplama ile sıfıra bölme engellendi |
-| Sipariş geçmişi olmayan müşteri | RFM segmentasyonuna dahil edilmedi |
-
-Bu yaklaşım modelin hatalı veya uydurma sinyaller öğrenmesini engelledi.
-
-## Analiz ve Modelleme Adımları
-
-1. Veriler yüklendi ve temel kalite kontrolleri yapıldı.
-2. Eventler ürün seviyesinde özetlendi.
-3. Gerçek satış adedi ve gelir `order_items.quantity` ve `line_total_usd` alanlarından hesaplandı.
-4. Yorumlar VADER + rating hibrit yöntemiyle pozitif, nötr ve negatif olarak etiketlendi.
-5. Ürünler için ağırlıklı `oneri_skoru` hesaplandı.
-6. Skor dağılımının üst %30'undaki ürünler `onerilir=1` olarak işaretlendi.
-7. Müşteriler RFM yöntemiyle segmentlere ayrıldı.
-8. Segmentlerin kategori alışveriş payları gerçek sipariş adetleri üzerinden hesaplandı.
-9. Müşteri-ürün seviyesinde kişiye özel öneri sıralama modeli kuruldu.
-10. Model sonuçları dashboard ve sunumda yorumlanabilir grafiklerle gösterildi.
+| `events.product_id` checkout/purchase'ta boş | Yapısal eksik. Satış adedi `order_items.quantity`'den alındı |
+| Üründe yorum yok | yorum_sayisi=0, pozitif_oran=0 |
+| Üründe görüntüleme yok | İlgili event sayıları 0 |
+| Oran paydası 0 | `np.where` ile koşullu hesaplama |
+| Sipariş geçmişi olmayan müşteri | RFM segmentasyonu dışı |
 
 ## Duygu Analizi
 
-Duygu analizi için VADER kullandım. Ancak yalnızca metin skoruna göre karar vermedim; yorumdaki rating bilgisini de dahil ettim. Bunun nedeni, veri setindeki yorumların kısa ve tekrarlı olmasıdır.
-
-Dashboard'da örnek yorumlar satır satır tekrar basılmadı. Aynı yorum metinleri tekilleştirilerek kaç kez geçtiği, ortalama rating, VADER ve güven değeriyle birlikte gösterildi. Böylece tekrar eden metinler saklanmadı; ama ekranda yanıltıcı biçimde çoğaltılmış gibi de sunulmadı.
-
-Kullandığım temel karar mantığı:
+VADER kullandım, ama metin skoruna ek olarak rating bilgisini de hibrit kuralın içine kattım. Sebebi: veri setindeki yorumlar kısa ve tekrarlı, sadece metin skoruna güvenmek yetersiz kalıyor.
 
 ```python
 if compound > 0.3 and rating >= 4:
@@ -127,114 +88,101 @@ else:
     etiket = "neutral"
 ```
 
-## Öneri Skoru
+**Sonuç:** 7.620 pozitif (%70.7) · 1.980 nötr (%18.4) · 1.180 negatif (%10.9)
 
-Genel ürün öneri skoru bir iş kuralı olarak tasarlandı. Bu skor kişisel önerinin kendisi değildir; ürünün genel performansını gösteren yardımcı bir sinyaldir.
+## Genel Ürün Öneri Skoru
 
-Skorda kullanılan başlıca alanlar:
+Bir iş kuralı olarak tasarlandı. Ürünün genel performansını gösteren yardımcı sinyal — kişisel öneri yerine geçmez.
 
-- Satış oranı
-- Ortalama rating
-- Sepete ekleme oranı
-- Pozitif yorum oranı
-- Gelir
-- Marj
+Ağırlıklı formül:
+
+```text
+oneri_skoru = 
+    %28 satış oranı
+  + %20 ortalama rating
+  + %18 sepete ekleme oranı
+  + %18 pozitif yorum oranı
+  + %8  gelir
+  + %8  marj
+```
+
+Her değişken min-max normalize edilir. Skorun üst %30'luk dilimi → `onerilir = 1` (**359 ürün**).
 
 ## Modelleme
 
-Projede iki ayrı ikili sınıflandırma modeli kullandım. Bu iki model aynı soruyu sormuyor; bu yüzden sonuçları ayrı ayrı yorumladım.
+İki ayrı ikili sınıflandırma modeli var. İki model farklı soruyu sorduğu için sonuçlar ayrı yorumlanmalı.
 
-| Model | Veri seviyesi | Modelin sorusu | Kullanıldığı yer |
+| Model | Veri seviyesi | Soru | Kullanıldığı yer |
 |---|---|---|---|
-| Genel ürün modeli | Ürün | Bu ürün genel olarak önerilmeli mi? | Genel öneriler ve ürün performansı |
-| Kişiye özel öneri sıralama modeli | Müşteri + ürün | Bu müşteri için hangi ürünler daha öncelikli önerilmeli? | Müşteri sekmesindeki kişisel ürün sıralaması |
+| Genel ürün modeli | Ürün (1.197 satır) | Bu ürün genel olarak önerilmeli mi? | Genel öneri listesi |
+| Kişiye özel öneri sıralama modeli | Müşteri × ürün (529.593 satır) | Bu müşteri için hangi ürünler öncelikli? | Kişisel ürün önerisi |
 
-Genel ürün modelinde hedef değişken, ağırlıklı `oneri_skoru` değerinin üst %30'luk dilimine göre oluşturuldu:
+Her ikisinde de **Random Forest Classifier** kullandım. Karar ağacı mantığı açıklanabilir; ayrıca özellik önemlerini görebiliyorum.
 
-```text
-1 = önerilir
-0 = önerilmez
-```
-
-Kişiye özel modelde hedef değişken gerçek sipariş verisinden oluşturuldu:
-
-```text
-1 = satın aldı
-0 = satın almadı
-```
-
-Her iki modelde de Random Forest kullandım. Karar ağaçları mantığıyla çalıştığı için sonuçları açıklamak kolaydır; ayrıca hangi değişkenlerin model kararında daha etkili olduğunu görebilirim.
+### Model Performansları
 
 | Model | AUC | Doğruluk | Precision | Recall | F1 |
 |---|---:|---:|---:|---:|---:|
-| Genel ürün modeli | 0.913 | %84.7 | %73.4 | %76.7 | 0.750 |
-| Kişiye özel öneri sıralama modeli | 0.954 | %88.2 | %48.5 | %99.99 | 0.653 |
+| Genel ürün modeli | 0.913 | %84.7 | %73.4 | %75.6 | 0.750 |
+| Kişiye özel model | 0.954 | %88.3 | %48.5 | %99.99 | 0.653 |
 
-Kişisel modelde recall değerinin çok yüksek olması, test verisinde satın alma yapan müşteri-ürün çiftlerinin neredeyse hiç kaçırılmadığını gösterir. Precision daha düşük kaldığı için bu modeli kesin satış kararı gibi değil, müşteriye gösterilecek ürünleri önceliklendiren bir aday sıralama modeli olarak yorumladım. Bu nedenle dashboardda kişisel model çıktıları “öneri önceliği” olarak gösterildi. Özellikle sepete ekleme davranışı güçlü bir sinyal olduğu için gerçek bir iş ortamında model zaman bazlı test ve canlı A/B test ile tekrar doğrulanmalıdır.
+### Veri Sızıntısı Önlemi
 
-Kişisel modelde `add_to_cart` değişkeninin baskın olup olmadığını ayrıca kontrol ettim. Aynı train/test ayrımında Random Forest ve Lojistik Regresyon modelleri karşılaştırıldı; ayrıca `add_to_cart` alanı çıkarıldığında metriklerin nasıl değiştiği ölçüldü.
+- **Genel ürün modelinde:** Hedef değişken (`onerilir`) öneri skorundan üretildiği için, öneri skorunun girdisi olan `satis_orani` modele özellik olarak verilmedi.
+- **Kişisel modelde:** `satin_aldi` hedefi sipariş verisinden üretildi. Hedefi doğrudan ele veren `oneri_skoru` ve ürün bazlı `sepet_orani` gibi alanlar modele konmadı. Eğitim ve test bölünmesi `stratify` ile sınıf oranları korunarak yapıldı.
 
-| Kontrol | Sonuç |
-|---|---:|
-| Ana kişisel modelde `add_to_cart` özellik önemi | %80.8 |
-| Random Forest AUC, `add_to_cart` dahil | 0.954 |
-| Random Forest AUC, `add_to_cart` hariç | 0.752 |
-| AUC farkı | 0.202 |
-| Recall farkı | 0.143 |
-| Precision farkı | 0.300 |
+### Kişisel Model Hakkında Önemli Bir Not
 
-Bu kontrol bana şunu gösterdi: kişisel model satın alma sinyalini büyük ölçüde sepete ekleme davranışından öğreniyor. Bu beklenen bir durumdur; çünkü e-ticarette sepete ekleme satın alma niyetinin en güçlü göstergelerinden biridir. Yine de bu yüzden modeli “kesin satın alır / satın almaz” kararı olarak değil, önerilecek ürünleri sıralayan destekleyici bir model olarak kullandım.
+Kişisel modelde **recall %99.99 ve precision %48.5**. Recall yüksek olduğu için test verisinde satın alma yapan müşteri-ürün çiftleri neredeyse hiç kaçırılmıyor. Precision daha düşük olduğu için aday liste geniş tutuluyor.
 
-Bu kontrolün çıktıları:
+Bu nedenle modeli **kesin satış tahmini** değil, müşteriye gösterilecek ürünleri **öncelik sırasına koyan bir aday sıralayıcı** olarak yorumladım. Dashboard'da çıktılar "öneri önceliği" başlığıyla gösteriliyor.
 
-```text
-outputs/kisisel_model_karsilastirma.csv
-outputs/kisisel_add_to_cart_kontrol.csv
-```
+#### Sepete Ekleme Sinyali Kontrolü
 
-## Görsel Çıktılar
+Modelin en güçlü özelliği olan `add_to_cart` çıkarıldığında metriklerin nasıl değiştiğini test ettim:
 
-Pipeline çalıştırıldığında dashboard ve sunumda kullanılan görseller `outputs/charts/` klasöründe yeniden üretilir. Bu görseller, proje adımlarını hızlıca kontrol etmek ve raporu görsel olarak desteklemek için kullanılır.
+| Senaryo | AUC | Recall | Precision |
+|---|---:|---:|---:|
+| add_to_cart **dahil** | 0.954 | %99.99 | %48.5 |
+| add_to_cart **hariç** | 0.752 | %85.6 | %18.5 |
 
-| Görsel | Ne gösteriyor? |
-|---|---|
-| <img src="outputs/charts/00_eda.png" width="420"> | Veri büyüklüğü, event dağılımı ve temel rating yapısının keşifsel özeti |
-| <img src="outputs/charts/01_funnel.png" width="420"> | Sayfa görüntüleme, sepete ekleme, checkout ve satın alma adımlarındaki dönüşüm hunisi |
-| <img src="outputs/charts/02_duygu.png" width="420"> | VADER + rating hibrit yaklaşımıyla oluşan duygu dağılımı |
-| <img src="outputs/charts/03_top_urunler.png" width="420"> | Genel öneri listesinde öne çıkan ürünler |
-| <img src="outputs/charts/04_skor.png" width="420"> | Öneri skoru dağılımı ve önerilir ürün eşiği |
-| <img src="outputs/charts/05_gelir.png" width="420"> | Ürünlerin gelir katkısı ve ticari performans görünümü |
-| <img src="outputs/charts/06_cm.png" width="420"> | Genel ürün öneri modelinin confusion matrix çıktısı |
-| <img src="outputs/charts/07_roc.png" width="420"> | Genel ürün öneri modelinin ROC eğrisi |
-| <img src="outputs/charts/08_onem.png" width="420"> | Genel ürün modelinde kullanılan değişkenlerin göreceli önemleri |
-| <img src="outputs/charts/09_rfm.png" width="420"> | RFM müşteri segmentlerinin dağılımı |
-| <img src="outputs/charts/10_rfm_scatter.png" width="420"> | RFM segmentlerinin recency ve harcama eksenindeki görünümü |
-| <img src="outputs/charts/11_kisisel_cm.png" width="420"> | Kişiye özel satın alma modelinin confusion matrix çıktısı |
-| <img src="outputs/charts/12_kisisel_roc.png" width="420"> | Kişiye özel satın alma modelinin ROC eğrisi |
-| <img src="outputs/charts/13_kisisel_onem.png" width="420"> | Kişiye özel modelde kullanılan değişkenlerin göreceli önemleri |
-| <img src="outputs/charts/14_segment_kategori.png" width="420"> | RFM segmentlerinin kategori bazlı satış payları |
+`add_to_cart` özelliğinin önem skoru **%80.7**. Model satın alma sinyalini büyük ölçüde sepete ekleme davranışından öğreniyor — bu beklenen bir durum (sepete ekleme, satın almanın en güçlü erken göstergelerinden biri). Veri sızıntısı değil, ama bu yüzden model **kesin tahmin yerine sıralama amacıyla** kullanılmalı. Gerçek mağaza ortamında zaman bazlı doğrulama ve A/B test ile yeniden sınanması gerekir.
+
+## Müşteri Segmentasyonu (RFM)
+
+Sipariş geçmişi olan **16.268 müşteri** segmentlendi. 3.732 müşterinin sipariş geçmişi olmadığı için RFM'e dahil edilmedi.
+
+| Segment | Kural | Müşteri |
+|---|---|---:|
+| Şampiyon | R≥4 ve F≥4 | 2.923 |
+| Sadık | R≥3 ve F≥3 | 4.388 |
+| Yeni | R≥4 ve F≤2 | 1.442 |
+| Potansiyel | Orta R/F | 1.014 |
+| Risk Altında | R≤2 ve F≥3 | 2.734 |
+| Kayıp | R≤2 ve F≤2 | 3.767 |
 
 ## Dashboard
 
-Dashboard Streamlit ile hazırlandı. Ana bölümler:
+Streamlit ile hazırlandı. Ana sekmeler:
 
-- Genel özet ve dönüşüm hunisi
-- Keşifsel veri analizi
-- Genel ürün önerileri
-- Model değerlendirmesi
-- Duygu analizi
-- Müşteri segmentasyonu, segment bazlı kategori tercihleri ve kişisel öneri
-- İstatistiksel analizler
+1. **Yönetici Özeti** — KPI'lar, dönüşüm hunisi
+2. **Veri Keşfi** — Tablo boyutları, eksik değer analizi, EDA grafikleri
+3. **Ürün Davranışı** — Fiyat × satış, rating × skor scatter analizleri
+4. **Genel Ürün Önerileri** — Filtrelenebilir top ürün listesi
+5. **Modelleme** — İki modelin metrik karşılaştırması, CM, ROC, özellik önemi
+6. **Yorum Duygusu** — VADER + rating sonuçları, örnek yorumlar
+7. **Kişisel Ürün Önerisi** — Müşteri seç → kişisel öneri sıralaması
+8. **Sistem Özeti** — Genel KPI dökümü ve kategori karşılaştırma
 
-Canlı dashboard:
+## Geliştirme Önerileri
 
-```text
-https://shoplens.streamlit.app/
-```
+- Gerçek mağaza verisiyle zaman bazlı doğrulama ve A/B test
+- RFM yerine KMeans tabanlı segmentasyon denemesi
+- Çok dilli yorumlar için VADER yerine BERT tabanlı model
+- Soğuk başlangıç (yeni müşteri) için içerik bazlı öneri katmanı
+- Model izleme paneli ve veri kayması (drift) kontrolü
 
-## Final Dosyaları
-
-Teslim için ana dosyalar:
+## Final Teslim Dosyaları
 
 ```text
 README.md
@@ -246,18 +194,3 @@ data/
 outputs/
 models/
 ```
-
-## Canlı Dashboard Yayını
-
-Dashboard Streamlit Community Cloud üzerinden yayınlanmıştır.
-
-Yayın ayarları:
-
-```text
-Repository root: ShopLens
-Main file path: dashboard.py
-Python dependencies: requirements.txt
-Streamlit config: .streamlit/config.toml
-```
-
-Canlı dashboard linki: https://shoplens.streamlit.app/
